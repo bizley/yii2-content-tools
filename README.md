@@ -107,6 +107,7 @@ Array of html options that will be applied to editable region's tag.
 ### imagesEngine
 
 _default:_ 
+
     [
         'upload' => '/site/content-tools-image-upload',
         'rotate' => '/site/content-tools-image-rotate',
@@ -117,6 +118,7 @@ Array of the urls of the image actions *OR* ```false``` to switch off the defaul
 ### saveEngine
 
 _default:_
+
     [
         'save' => '/site/save-content',
     ]
