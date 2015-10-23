@@ -3174,12 +3174,17 @@
     };
 
     Text.prototype.blur = function() {
+      var error;
       if (this.content.isWhitespace()) {
         if (this.parent()) {
           this.parent().detach(this);
         }
       } else if (this.isMounted()) {
-        this._domElement.blur();
+        try {
+          this._domElement.blur();
+        } catch (_error) {
+          error = _error;
+        }
         this._domElement.removeAttribute('contenteditable');
       }
       return Text.__super__.blur.call(this);
@@ -3475,7 +3480,7 @@
           target.content = target.content.concat(element.content);
         }
         if (target.isMounted()) {
-          target._domElement.innerHTML = target.content.html();
+          target.updateInnerHTML();
         }
         target.focus();
         new ContentSelect.Range(offset, offset).select(target._domElement);
@@ -3528,6 +3533,27 @@
         this._cached = content.html();
       }
       return ("" + indent + "<" + this._tagName + (this._attributesToString()) + ">") + ("" + this._cached + "</" + this._tagName + ">");
+    };
+
+    PreText.prototype.updateInnerHTML = function() {
+      var html;
+      html = this.content.html();
+      html += '\n';
+      this._domElement.innerHTML = html;
+      ContentSelect.Range.prepareElement(this._domElement);
+      return this._flagIfEmpty();
+    };
+
+    PreText.prototype._onKeyUp = function(ev) {
+      var html, newSnaphot, snapshot;
+      snapshot = this.content.html();
+      html = this._domElement.innerHTML.replace(/[\n]$/, '');
+      this.content = new HTMLString.String(html, this.content.preserveWhitespace());
+      newSnaphot = this.content.html();
+      if (snapshot !== newSnaphot) {
+        this.taint();
+      }
+      return this._flagIfEmpty();
     };
 
     PreText.prototype._keyReturn = function(ev) {
@@ -5218,6 +5244,7 @@
         tag = _ref[_i];
         tag.unmount();
       }
+      this._tagUIs = [];
       if (!element) {
         return;
       }
@@ -7087,6 +7114,8 @@
       this._state = ContentTools.EditorApp.DORMANT;
       this._regions = null;
       this._orderedRegions = null;
+      this._rootLastModified = null;
+      this._regionsLastModified = {};
       this._ignition = null;
       this._inspector = null;
       this._toolbox = null;
@@ -7366,9 +7395,10 @@
     };
 
     _EditorApp.prototype.save = function() {
-      var args, child, html, modifiedRegions, name, passive, region, _ref;
+      var args, child, html, modifiedRegions, name, passive, region, root, _ref;
       passive = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      if (!ContentEdit.Root.get().lastModified() && passive) {
+      root = ContentEdit.Root.get();
+      if (root.lastModified() === this._rootLastModified && passive) {
         return;
       }
       modifiedRegions = {};
@@ -7382,11 +7412,15 @@
             html = '';
           }
         }
-        modifiedRegions[name] = html;
         if (!passive) {
-          region.domElement().innerHTML = modifiedRegions[name];
+          region.domElement().innerHTML = html;
         }
+        if (region.lastModified() === this._regionsLastModified[name]) {
+          continue;
+        }
+        modifiedRegions[name] = html;
       }
+      console.log(modifiedRegions);
       return this.trigger.apply(this, ['save', modifiedRegions].concat(__slice.call(args)));
     };
 
@@ -7408,12 +7442,13 @@
         }
         this._regions[name] = new ContentEdit.Region(domRegion);
         this._orderedRegions.push(name);
+        this._regionsLastModified[name] = this._regions[name].lastModified();
       }
+      this._rootLastModified = ContentEdit.Root.get().lastModified();
       this._preventEmptyRegions();
       this.history = new ContentTools.History(this._regions);
       this.history.watch();
       this._state = ContentTools.EditorApp.EDITING;
-      ContentEdit.Root.get().commit();
       this._toolbox.show();
       this._inspector.show();
       return this.busy(false);
@@ -7652,6 +7687,9 @@
         region = element.closest(function(node) {
           return node.constructor.name === 'Region';
         });
+        if (!region) {
+          return;
+        }
         _ref1 = this._regions;
         for (name in _ref1) {
           other_region = _ref1[name];
