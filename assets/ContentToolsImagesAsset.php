@@ -24,7 +24,7 @@ class ContentToolsImagesAsset extends AssetBundle
     /**
      * @inheritdoc
      */
-    public $sourcePath = '@vendor/bizley/content-tools/js';
+    public $sourcePath = '@vendor/bizley/contenttools/js';
     
     /**
      * @inheritdoc

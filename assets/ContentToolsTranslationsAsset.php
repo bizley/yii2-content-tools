@@ -24,5 +24,5 @@ class ContentToolsTranslationsAsset extends AssetBundle
     /**
      * @inheritdoc
      */
-    public $sourcePath = '@vendor/bizley/content-tools/ContentTools/translations';
+    public $sourcePath = '@vendor/bizley/contenttools/ContentTools/translations';
 }
