@@ -3175,6 +3175,9 @@
 
     Text.prototype.blur = function() {
       var error;
+      if (this.isMounted()) {
+        this._syncContent();
+      }
       if (this.content.isWhitespace()) {
         if (this.parent()) {
           this.parent().detach(this);
@@ -3308,14 +3311,7 @@
     };
 
     Text.prototype._onKeyUp = function(ev) {
-      var newSnaphot, snapshot;
-      snapshot = this.content.html();
-      this.content = new HTMLString.String(this._domElement.innerHTML, this.content.preserveWhitespace());
-      newSnaphot = this.content.html();
-      if (snapshot !== newSnaphot) {
-        this.taint();
-      }
-      return this._flagIfEmpty();
+      return this._syncContent();
     };
 
     Text.prototype._onMouseDown = function(ev) {
@@ -3465,6 +3461,17 @@
       } else {
         return this._removeCSSClass('ce-element--empty');
       }
+    };
+
+    Text.prototype._syncContent = function(ev) {
+      var newSnaphot, snapshot;
+      snapshot = this.content.html();
+      this.content = new HTMLString.String(this._domElement.innerHTML, this.content.preserveWhitespace());
+      newSnaphot = this.content.html();
+      if (snapshot !== newSnaphot) {
+        this.taint();
+      }
+      return this._flagIfEmpty();
     };
 
     Text.droppers = {
@@ -5478,7 +5485,7 @@
           tool = ContentTools.ToolShelf.fetch(toolName);
           this._toolUIs[toolName] = new ContentTools.ToolUI(tool);
           this._toolUIs[toolName].mount(domToolGroup);
-          this._toolUIs[toolName].disable();
+          this._toolUIs[toolName].disabled(true);
           this._toolUIs[toolName].bind('apply', (function(_this) {
             return function() {
               return _this.updateTools();
@@ -5713,20 +5720,8 @@
       this._disabled = false;
     }
 
-    ToolUI.prototype.disabled = function() {
-      return this._disabled;
-    };
-
-    ToolUI.prototype.apply = function() {
-      var callback, element, selection;
-      element = ContentEdit.Root.get().focused();
-      if (!(element && element.isMounted())) {
-        return;
-      }
-      selection = null;
-      if (element.selection) {
-        selection = element.selection();
-      }
+    ToolUI.prototype.apply = function(element, selection) {
+      var callback;
       if (!this.tool.canApply(element, selection)) {
         return;
       }
@@ -5740,22 +5735,21 @@
       return this.tool.apply(element, selection, callback);
     };
 
-    ToolUI.prototype.disable = function() {
-      if (this._disabled) {
+    ToolUI.prototype.disabled = function(disabledState) {
+      if (disabledState === void 0) {
+        return this._disabled;
+      }
+      if (this._disabled === disabledState) {
         return;
       }
-      this._disabled = true;
-      this._mouseDown = false;
-      this.addCSSClass('ct-tool--disabled');
-      return this.removeCSSClass('ct-tool--applied');
-    };
-
-    ToolUI.prototype.enable = function() {
-      if (!this._disabled) {
-        return;
+      this._disabled = disabledState;
+      if (disabledState) {
+        this._mouseDown = false;
+        this.addCSSClass('ct-tool--disabled');
+        return this.removeCSSClass('ct-tool--applied');
+      } else {
+        return this.removeCSSClass('ct-tool--disabled');
       }
-      this._disabled = false;
-      return this.removeCSSClass('ct-tool--disabled');
     };
 
     ToolUI.prototype.mount = function(domParent, before) {
@@ -5769,13 +5763,13 @@
 
     ToolUI.prototype.update = function(element, selection) {
       if (!(element && element.isMounted())) {
-        this.disable();
+        this.disabled(true);
         return;
       }
       if (this.tool.canApply(element, selection)) {
-        this.enable();
+        this.disabled(false);
       } else {
-        this.disable();
+        this.disabled(true);
         return;
       }
       if (this.tool.isApplied(element, selection)) {
@@ -5806,8 +5800,17 @@
     };
 
     ToolUI.prototype._onMouseUp = function() {
+      var element, selection;
       if (this._mouseDown) {
-        this.apply();
+        element = ContentEdit.Root.get().focused();
+        if (!(element && element.isMounted())) {
+          return;
+        }
+        selection = null;
+        if (element.selection) {
+          selection = element.selection();
+        }
+        this.apply(element, selection);
       }
       this._mouseDown = false;
       return this.removeCSSClass('ct-tool--down');
@@ -7178,6 +7181,11 @@
       })(this));
       this._ignition.bind('stop', (function(_this) {
         return function(save) {
+          var focused;
+          focused = ContentEdit.Root.get().focused();
+          if (focused && focused._syncContent !== void 0) {
+            focused._syncContent();
+          }
           if (save) {
             _this.save();
           } else {

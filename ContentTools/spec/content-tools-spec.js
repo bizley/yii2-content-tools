@@ -798,7 +798,7 @@
           expect(region.children.length).toBe(2);
           return done();
         };
-        return setTimeout(checkUndo, 750);
+        return setTimeout(checkUndo, 1000);
       });
       return it('should allow a redo to be triggered with Ctrl-Shift-z key short-cut', function(done) {
         var checkRedo, element, region, toolbox;
@@ -821,7 +821,73 @@
           expect(region.children.length).toBe(1);
           return done();
         };
-        return setTimeout(checkRedo, 750);
+        return setTimeout(checkRedo, 1000);
+      });
+    });
+  });
+
+  describe('ContentTools.ToolboxUI', function() {
+    var div, editor;
+    div = null;
+    editor = null;
+    beforeEach(function() {
+      div = document.createElement('div');
+      div.setAttribute('class', 'editable');
+      div.setAttribute('id', 'foo');
+      div.innerHTML = '<p>bar</p><img scr="test.png">';
+      document.body.appendChild(div);
+      editor = ContentTools.EditorApp.get();
+      return editor.init('.editable');
+    });
+    afterEach(function() {
+      editor.destroy();
+      return document.body.removeChild(div);
+    });
+    describe('ContentTools.ToolUI()', function() {
+      return it('should return an instance of a ToolUI', function() {
+        var tool;
+        tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('bold'));
+        return expect(tool instanceof ContentTools.ToolUI).toBe(true);
+      });
+    });
+    describe('ContentTools.ToolUI.disabled()', function() {
+      return it('should set/get the disabled state for the tool', function() {
+        var tool;
+        tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('bold'));
+        expect(tool.disabled()).toBe(false);
+        tool.disabled(true);
+        return expect(tool.disabled()).toBe(true);
+      });
+    });
+    describe('ContentTools.ToolUI.apply()', function() {
+      return it('should apply the tool associated with the component', function() {
+        var element, region, tool;
+        tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('heading'));
+        region = new ContentEdit.Region(document.querySelectorAll('.editable')[0]);
+        element = region.children[0];
+        tool.apply(element);
+        return expect(element.tagName()).toBe('h1');
+      });
+    });
+    describe('ContentTools.Tool.mount()', function() {
+      return it('should mount the component', function() {
+        var tool;
+        tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('bold'));
+        editor.attach(tool);
+        tool.mount(editor.domElement());
+        return expect(tool.isMounted()).toBe(true);
+      });
+    });
+    return describe('ContentTools.Tool.update()', function() {
+      return it('should update the state of the tool based on the currently focused element and content selection', function() {
+        var element, region, tool;
+        tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('heading'));
+        region = new ContentEdit.Region(document.querySelectorAll('.editable')[0]);
+        element = region.children[0];
+        tool.update();
+        expect(tool.disabled()).toBe(true);
+        tool.update(element);
+        return expect(tool.disabled()).toBe(false);
       });
     });
   });

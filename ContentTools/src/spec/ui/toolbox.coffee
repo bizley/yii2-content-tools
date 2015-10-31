@@ -198,7 +198,7 @@ describe 'ContentTools.ToolboxUI', () ->
                 done()
 
             # Wait for change to be recorded in the history stack
-            setTimeout(checkUndo, 750)
+            setTimeout(checkUndo, 1000)
 
         it 'should allow a redo to be triggered with Ctrl-Shift-z key
                 short-cut', (done) ->
@@ -231,4 +231,104 @@ describe 'ContentTools.ToolboxUI', () ->
                 done()
 
             # Wait for change to be recorded in the history stack
-            setTimeout(checkRedo, 750)
+            setTimeout(checkRedo, 1000)
+
+
+# ToolsUI
+
+describe 'ContentTools.ToolboxUI', () ->
+
+    div = null
+    editor = null
+
+    beforeEach ->
+        # Create an editable region
+        div = document.createElement('div')
+        div.setAttribute('class', 'editable')
+        div.setAttribute('id', 'foo')
+        div.innerHTML = '<p>bar</p><img scr="test.png">'
+        document.body.appendChild(div)
+
+        # Initialize the editor
+        editor = ContentTools.EditorApp.get()
+        editor.init('.editable')
+
+    afterEach ->
+        # Shutdown the editor
+        editor.destroy()
+
+        # Remove the editable region
+        document.body.removeChild(div)
+
+
+    describe 'ContentTools.ToolUI()', () ->
+
+        it 'should return an instance of a ToolUI', () ->
+
+            tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('bold'))
+            expect(tool instanceof ContentTools.ToolUI).toBe true
+
+
+    describe 'ContentTools.ToolUI.disabled()', () ->
+
+        it 'should set/get the disabled state for the tool', () ->
+
+            tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('bold'))
+
+            # Check that the default ignition disabled state to be true
+            expect(tool.disabled()).toBe false
+
+            # Check we can change it
+            tool.disabled(true)
+            expect(tool.disabled()).toBe true
+
+
+    describe 'ContentTools.ToolUI.apply()', () ->
+
+        it 'should apply the tool associated with the component', () ->
+
+            tool = new ContentTools.ToolUI(
+                ContentTools.ToolShelf.fetch('heading'))
+            region = new ContentEdit.Region(
+                document.querySelectorAll('.editable')[0])
+            element = region.children[0]
+
+            # Apply the tool to a paragraph and check that it successfully
+            # converts the paragraph to a heading.
+            tool.apply(element)
+
+            expect(element.tagName()).toBe 'h1'
+
+
+    describe 'ContentTools.Tool.mount()', () ->
+
+        it 'should mount the component', () ->
+
+            # Start the editor so the document is editable
+            tool = new ContentTools.ToolUI(ContentTools.ToolShelf.fetch('bold'))
+            editor.attach(tool)
+            tool.mount(editor.domElement())
+
+            expect(tool.isMounted()).toBe true
+
+
+    describe 'ContentTools.Tool.update()', () ->
+
+        it 'should update the state of the tool based on the currently focused
+                element and content selection', () ->
+
+            tool = new ContentTools.ToolUI(
+                ContentTools.ToolShelf.fetch('heading'))
+            region = new ContentEdit.Region(
+                document.querySelectorAll('.editable')[0])
+            element = region.children[0]
+
+            # Check the tool is disabled after an update if no element is
+            # selected (e.g it's not applicable to the current selection).
+            tool.update()
+            expect(tool.disabled()).toBe true
+
+            # Check the tool is enabled after an update if an element is
+            # provided.
+            tool.update(element)
+            expect(tool.disabled()).toBe false
