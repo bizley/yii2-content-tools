@@ -1707,8 +1707,6 @@
             return domElement.removeAttribute('class');
           }
         }
-      } else {
-        return domElement.setAttribute('class', className);
       }
     }
   };
@@ -2376,9 +2374,19 @@
           }
         };
       })(this));
-      return this._domElement.addEventListener('paste', (function(_this) {
+      this._domElement.addEventListener('paste', (function(_this) {
         return function(ev) {
           return _this._onPaste(ev);
+        };
+      })(this));
+      this._domElement.addEventListener('dragover', (function(_this) {
+        return function(ev) {
+          return ev.preventDefault();
+        };
+      })(this));
+      return this._domElement.addEventListener('drop', (function(_this) {
+        return function(ev) {
+          return _this._onNativeDrop(ev);
         };
       })(this));
     };
@@ -2393,26 +2401,12 @@
       }
     };
 
-    Element.prototype._onMouseMove = function(ev) {};
+    Element.prototype._onMouseMove = function(ev) {
+      return this._onOver(ev);
+    };
 
     Element.prototype._onMouseOver = function(ev) {
-      var dragging, root;
-      this._addCSSClass('ce-element--over');
-      root = ContentEdit.Root.get();
-      dragging = root.dragging();
-      if (!dragging) {
-        return;
-      }
-      if (dragging === this) {
-        return;
-      }
-      if (root._dropTarget) {
-        return;
-      }
-      if (this.constructor.droppers[dragging.constructor.name] || dragging.constructor.droppers[this.constructor.name]) {
-        this._addCSSClass('ce-element--drop');
-        return root._dropTarget = this;
-      }
+      return this._onOver(ev);
     };
 
     Element.prototype._onMouseOut = function(ev) {
@@ -2433,10 +2427,36 @@
 
     Element.prototype._onMouseUp = function(ev) {};
 
+    Element.prototype._onNativeDrop = function(ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      return ContentEdit.Root.get().trigger('native-drop', this, ev);
+    };
+
     Element.prototype._onPaste = function(ev) {
       ev.preventDefault();
       ev.stopPropagation();
       return ContentEdit.Root.get().trigger('paste', this, ev);
+    };
+
+    Element.prototype._onOver = function(ev) {
+      var dragging, root;
+      this._addCSSClass('ce-element--over');
+      root = ContentEdit.Root.get();
+      dragging = root.dragging();
+      if (!dragging) {
+        return;
+      }
+      if (dragging === this) {
+        return;
+      }
+      if (root._dropTarget) {
+        return;
+      }
+      if (this.constructor.droppers[dragging.constructor.name] || dragging.constructor.droppers[this.constructor.name]) {
+        this._addCSSClass('ce-element--drop');
+        return root._dropTarget = this;
+      }
     };
 
     Element.prototype._removeDOMEventListeners = function() {};
@@ -3075,6 +3095,9 @@
     Static.prototype.html = function(indent) {
       if (indent == null) {
         indent = '';
+      }
+      if (HTMLString.Tag.SELF_CLOSING[this._tagName]) {
+        return "" + indent + "<" + this._tagName + (this._attributesToString()) + ">";
       }
       return ("" + indent + "<" + this._tagName + (this._attributesToString()) + ">") + ("" + this._content) + ("" + indent + "</" + this._tagName + ">");
     };
@@ -4706,13 +4729,20 @@
     };
 
     TableCellText.prototype._keyDown = function(ev) {
-      var cell, cellIndex, lastCell, nextRow, row;
+      var cell, cellIndex, lastCell, next, nextRow, row;
       ev.preventDefault();
       cell = this.parent();
       if (this._isInLastRow()) {
         row = cell.parent();
         lastCell = row.children[row.children.length - 1].tableCellText();
-        return lastCell.nextContent().focus();
+        next = lastCell.nextContent();
+        if (next) {
+          return next.focus();
+        } else {
+          return ContentEdit.Root.get().trigger('next-region', this.closest(function(node) {
+            return node.constructor.name === 'Region';
+          }));
+        }
       } else {
         nextRow = cell.parent().nextWithTest(function(node) {
           return node.constructor.name === 'TableRow';
@@ -4756,12 +4786,19 @@
     };
 
     TableCellText.prototype._keyUp = function(ev) {
-      var cell, cellIndex, previousRow, row;
+      var cell, cellIndex, previous, previousRow, row;
       ev.preventDefault();
       cell = this.parent();
       if (this._isInFirstRow()) {
         row = cell.parent();
-        return row.children[0].previousContent().focus();
+        previous = row.children[0].previousContent();
+        if (previous) {
+          return previous.focus();
+        } else {
+          return ContentEdit.Root.get().trigger('previous-region', this.closest(function(node) {
+            return node.constructor.name === 'Region';
+          }));
+        }
       } else {
         previousRow = cell.parent().previousWithTest(function(node) {
           return node.constructor.name === 'TableRow';
