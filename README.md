@@ -12,29 +12,29 @@ Add the package to your composer.json:
 
     {
         "require": {
-            "bizley/contenttools": "dev-master"
+            "bizley/contenttools": "1.0"
         }
     }
 
-and run composer update or alternatively run composer require bizley/contenttools
+and run ```composer update``` or alternatively run ```composer require bizley/contenttools```
 
 ## Usage
 
 ### 1. The widget.
 
-Wrap any part of the content with ```<?php bizley\contenttools\ContentTools::begin(); ?>``` and ```<?php bizley\contenttools\ContentTools::end(); ?>```.
+Wrap any part of the content with ```<?php \bizley\contenttools\ContentTools::begin(); ?>``` and ```<?php \bizley\contenttools\ContentTools::end(); ?>```.
 
-    <?php bizley\contenttools\ContentTools::begin(); ?>
+    <?php \bizley\contenttools\ContentTools::begin(); ?>
     This is the part of view that is editable.
     <p>There are paragraphs</p>
     <div>and more...</div>
-    <?php bizley\contenttools\ContentTools::end(); ?>
+    <?php \bizley\contenttools\ContentTools::end(); ?>
 
 You can use the widget multiple times on one page.
 
 ### 2. Backend.
 
-ContentTools saves content and uploaded images asynchronously and it requires some preparation on the backend side.
+Yii 2 ContentTools saves content and uploaded images asynchronously and it requires some preparation on the backend side.
 
 You have to create few controllers' actions:
  - "upload new image" action,
@@ -43,7 +43,7 @@ You have to create few controllers' actions:
  - "save content" action.
 
 Three first actions are already prepared if you don't want any special operations. You can find them in 'actions' folder.
-- _UploadAction_ - takes care of validating the uploaded images using bizley\contenttools\models\ImageForm (jpg, png and gif images are allowed, 
+- _UploadAction_ - takes care of validating the uploaded images using \bizley\contenttools\models\ImageForm (jpg, png and gif images are allowed, 
 maximum width and height is 1000px and maximum size is 2MB), images are saved in 'content-tools-uploads' folder accessible from web.
 - _RotateAction_ - takes care of rotating the uploaded image using Imagine library (through yii2-imagine required in the composer.json).
 - _InsertAction_ - takes care of inserting image into the content with optional cropping using Imagine library.
@@ -61,13 +61,14 @@ So if you don't want to change the 'imagesEngine' parameter add in your SiteCont
     public function actions()
     {
         return [
-            'content-tools-image-upload' => bizley\contenttools\actions\UploadAction::className(),
-            'content-tools-image-insert' => bizley\contenttools\actions\InsertAction::className(),
-            'content-tools-image-rotate' => bizley\contenttools\actions\RotateAction::className(),
+            'content-tools-image-upload' => \bizley\contenttools\actions\UploadAction::className(),
+            'content-tools-image-insert' => \bizley\contenttools\actions\InsertAction::className(),
+            'content-tools-image-rotate' => \bizley\contenttools\actions\RotateAction::className(),
         ];
     }
 
-The last "save content" action is not prepared so go ahead and take care of it. Default configuration for this is:
+The last "save content" action is not prepared because it depends on the business logic of your application. See *Saving content* part at the end of this file. 
+Default configuration for this is:
 
     'saveEngine' => [
         'save' => '/site/save-content',
@@ -80,28 +81,33 @@ You can add options for the widget by passing the configuration array in the beg
 
 ### id
 
-_default:_ ```null```
-Identifier of the editable region (must be unique).
+_default:_ ```null``` 
+Identifier of the editable region (must be unique). 
 If left empty it is automatically set to 'contentToolsXXX' where XXX is the number of next widget.
+
+### page
+
+_default:_ ```null``` 
+Page identifier. If null it will be set to the current url.
 
 ### tag
 
-_default:_ ```'div'```
+_default:_ ```'div'``` 
 Tag that will be used to wrap the editable content.
 
 ### dataName
 
-_default:_ ```'name'```
+_default:_ ```'name'``` 
 Name of the data-* attribute that will store the identifier of editable region.
 
 ### dataInit
 
-_default:_ ```'editable'```
+_default:_ ```'editable'``` 
 Name of the data-* attribute that will mark the region as editable.
 
 ### options
 
-_default:_ ```[]```
+_default:_ ```[]``` 
 Array of html options that will be applied to editable region's tag.
 
 ### imagesEngine
@@ -126,8 +132,8 @@ Array with the url of the content saving action *OR* ```false``` to switch off t
 
 ### styles
 
-_default:_ ```[]```
-Array of styles that can be applied to the edited content.
+_default:_ ```[]``` 
+Array of styles that can be applied to the edited content. 
 Every style should be added in array like:
 
     'Name of the style' => [
@@ -146,19 +152,19 @@ Example:
 
 ### language
 
-_default:_ ```false```
-Boolean flag or language code of the widget translation. You can see the list of prepared translations in 'ContentTools/translations' folder.
-```false``` means that widget will not be translated (default language is English).
-```true``` means that widget will be translated using the application language.
+_default:_ ```false``` 
+Boolean flag or language code of the widget translation. You can see the list of prepared translations in 'ContentTools/translations' folder. 
+```false``` means that widget will not be translated (default language is English). 
+```true``` means that widget will be translated using the application language. 
 If this parameter is a string widget tries to load the translation file with the given name. 
-If it cannot be found and string is longer that 2 characters widget tries again this time with parameter shortened to 2 characters.
+If it cannot be found and string is longer that 2 characters widget tries again this time with parameter shortened to 2 characters. 
 If again it cannot be found language sets back to default.
 
 ### globalConfig
 
-_default:_ ```true```
-Boolean flag whether the configuration should be global.
-Global configuration means that every succeeding widget ignores _tag_, _dataName_, _dataInit_, _imagesEngine_, _saveEngine_ and _language_ parameters 
+_default:_ ```true``` 
+Boolean flag whether the configuration should be global. 
+Global configuration means that every succeeding widget ignores _page_, _tag_, _dataName_, _dataInit_, _imagesEngine_, _saveEngine_ and _language_ parameters 
 and sets them to be the same as in the first one. Also _styles_ are added only if they've got unique names.
 
 
@@ -183,4 +189,14 @@ At the moment errors are only displayed in browser's console (user sees only the
 ## Saving content
 
 Action responsible for saving the content should expect the array of every page region data in pairs ```'region-identifier' => 'region-content'```.
-You can set the ```'id'``` of the region to be ```ModelName[attributeName]``` so it can be handled in the standard Yii 2 way (i.e. with load()).
+
+Typical structure could look like this:
+
+    [
+        'contentTools0' => '...', // HTML content of the contentTools0 region
+        'contentTools1' => '...', // HTML content of the contentTools1 region
+        '_csrf'         => '...', // CRSF token value
+        'page'          => '/site/index' // page identifier
+    ]
+
+Now you just need to validate and save the regions linked to the page with the given identifier.

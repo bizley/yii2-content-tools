@@ -1,5 +1,9 @@
 <?php
 
+namespace bizley\contenttools\assets;
+
+use yii\web\AssetBundle;
+
 /**
  * @author Paweł Bizley Brzozowski
  * @version 1.0
@@ -10,13 +14,7 @@
  * ContentTools was created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
- */
-
-namespace bizley\contenttools\assets;
-
-use yii\web\AssetBundle;
-
-/**
+ * 
  * Default js for the images engine.
  */
 class ContentToolsImagesAsset extends AssetBundle

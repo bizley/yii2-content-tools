@@ -1,1 +1,0 @@
-- Tool Specs need to be modified to only test methods they override

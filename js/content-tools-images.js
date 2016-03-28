@@ -1,13 +1,18 @@
-var imageUploader = function (dialog) {
+/* Yii 2 ContentTools images engine */
+function imageUploader(dialog) {
     var image, xhr, xhrComplete, xhrProgress;
-    var rotateImage = function(direction) {
+
+    function rotateImage(direction) {
         var formData;
+
         xhrComplete = function (event) {
             var response;
             if (parseInt(event.target.readyState) !== 4) return;
+
             xhr = null;
             xhrComplete = null;
             dialog.busy(false);
+
             if (parseInt(event.target.status) === 200) {
                 response = JSON.parse(event.target.responseText);
                 if (response.errors) {
@@ -21,25 +26,35 @@ var imageUploader = function (dialog) {
                     };
                     dialog.populate(image.url, image.size);
                 }
+            } else {
+                new ContentTools.FlashUI('no');
             }
-            else new ContentTools.FlashUI('no');
         };
+
         dialog.busy(true);
+
         formData = new FormData();
         formData.append('url', image.url);
         formData.append('direction', direction);
-        if (_csrf.length) formData.append(_csrf[0], _csrf[1]);
-        else console.log('_csrf is not set!');
-        if (_imagesUrl.length) {
+        if (_CTCSRF.length) {   
+            formData.append(_CTCSRF[0], _CTCSRF[1]);
+        }
+        else {
+            console.log('_CTCSRF is not set!');
+        }
+
+        if (_CTImagesUrl.length) {
             xhr = new XMLHttpRequest();
             xhr.addEventListener('readystatechange', xhrComplete);
-            xhr.open('POST', _imagesUrl[1], true);
+            xhr.open('POST', _CTImagesUrl[1], true);
             xhr.send(formData);
         }
-        else console.log('_imagesUrl is not set!');
-    };
-
-    dialog.bind('imageUploader.cancelUpload', function () {
+        else {
+            console.log('_CTImagesUrl is not set!');
+        }
+    }
+    
+    dialog.addEventListener('imageuploader.cancelupload', function () {
         if (xhr) {
             xhr.upload.removeEventListener('progress', xhrProgress);
             xhr.removeEventListener('readystatechange', xhrComplete);
@@ -47,21 +62,27 @@ var imageUploader = function (dialog) {
         }
         dialog.state('empty');
     });
-    dialog.bind('imageUploader.clear', function () {
+    
+    dialog.addEventListener('imageuploader.clear', function () {
         dialog.clear();
         image = null;
     });
-    dialog.bind('imageUploader.fileReady', function (file) {
+    
+    dialog.addEventListener('imageuploader.fileready', function (event) {
         var formData;
+        var file = event.detail().file;
+
         xhrProgress = function (event) {
             dialog.progress((event.loaded / event.total) * 100);
         };
         xhrComplete = function (event) {
             var response;
             if (parseInt(event.target.readyState) !== 4) return;
+
             xhr = null;
             xhrProgress = null;
             xhrComplete = null;
+
             if (parseInt(event.target.status) === 200) {
                 response = JSON.parse(event.target.responseText);
                 if (response.errors) {
@@ -75,40 +96,55 @@ var imageUploader = function (dialog) {
                     };
                     dialog.populate(image.url, image.size);
                 }
+            } else {
+                new ContentTools.FlashUI('no');
             }
-            else new ContentTools.FlashUI('no');
         };
+
         dialog.state('uploading');
         dialog.progress(0);
+
         formData = new FormData();
         formData.append('image', file);
-        if (_csrf.length) formData.append(_csrf[0], _csrf[1]);
-        else console.log('_csrf is not set!');
-        if (_imagesUrl.length) {
+        if (_CTCSRF.length) {
+            formData.append(_CTCSRF[0], _CTCSRF[1])
+        }
+        else {
+            console.log('_CTCSRF is not set!');
+        }
+        if (_CTImagesUrl.length) {
             xhr = new XMLHttpRequest();
             xhr.upload.addEventListener('progress', xhrProgress);
             xhr.addEventListener('readystatechange', xhrComplete);
-            xhr.open('POST', _imagesUrl[0], true);
+            xhr.open('POST', _CTImagesUrl[0], true);
             xhr.send(formData);
         }
-        else console.log('_imagesUrl is not set!');
+        else {
+            console.log('_CTImagesUrl is not set!');
+        }
     });
-    dialog.bind('imageUploader.rotateCCW', function () {
+    
+    dialog.addEventListener('imageuploader.rotateccw', function () {
         rotateImage('CCW');
     });
-    dialog.bind('imageUploader.rotateCW', function () {
+
+    dialog.addEventListener('imageuploader.rotatecw', function () {
         rotateImage('CW');
     });
-    dialog.bind('imageUploader.save', function () {
-        var formData;
+    
+    dialog.addEventListener('imageuploader.save', function () {
+        var crop, cropRegion, formData;
+
         xhrComplete = function (event) {
-            var response;
             if (parseInt(event.target.readyState) !== 4) return;
+
             xhr = null;
             xhrComplete = null;
+
             dialog.busy(false);
+
             if (parseInt(event.target.status) === 200) {
-                response = JSON.parse(event.target.responseText);
+                var response = JSON.parse(event.target.responseText);
                 if (response.errors) {
                     for (var k in response.errors) console.log(response.errors[k]);
                     new ContentTools.FlashUI('no');
@@ -119,26 +155,39 @@ var imageUploader = function (dialog) {
                         response.size,
                         {
                             'alt': response.alt,
-                            'data-ce-max-width': response.size[0]
+                            'data-ce-max-width': image.size[0]
                         }
                     );
                 }
+            } else {
+                new ContentTools.FlashUI('no');
             }
-            else new ContentTools.FlashUI('no');
         };
+
         dialog.busy(true);
+
         formData = new FormData();
         formData.append('url', image.url);
-        if (dialog.cropRegion()) formData.append('crop', dialog.cropRegion());
-        if (_csrf.length) formData.append(_csrf[0], _csrf[1]);
-        else console.log('_csrf is not set!');
-        if (_imagesUrl.length) {
+
+        formData.append('width', 600);
+        if (dialog.cropRegion()) {
+            formData.append('crop', dialog.cropRegion());
+        }
+        if (_CTCSRF.length) {
+            formData.append(_CTCSRF[0], _CTCSRF[1])
+        }
+        else {
+            console.log('_CTCSRF is not set!');
+        }
+        if (_CTImagesUrl.length) {
             xhr = new XMLHttpRequest();
             xhr.addEventListener('readystatechange', xhrComplete);
-            xhr.open('POST', _imagesUrl[2], true);
+            xhr.open('POST', _CTImagesUrl[2], true);
             xhr.send(formData);
         }
-        else console.log('_imagesUrl is not set!');
+        else {
+            console.log('_CTImagesUrl is not set!');
+        }
     });
-};
+}
 ContentTools.IMAGE_UPLOADER = imageUploader;

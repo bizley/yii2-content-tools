@@ -2,9 +2,10 @@
     "name": "bizley/contenttools",
     "type": "yii2-extension",
     "description": "ContentTools editor implementation for Yii 2.",
-    "keywords": ["contenttools", "yii2", "extension", "widget", "editor", "wysiwyg"],
+    "keywords": ["contenttools", "yii2", "extension", "widget", "editor", "wysiwyg", "html"],
     "license": "Apache-2.0",
     "support": {
+        "issues": "https://github.com/bizley-code/yii2-content-tools/issues?state=open",
         "source": "https://github.com/bizley-code/yii2-content-tools"
     },
     "authors": [
@@ -14,7 +15,8 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "*",
+        "yiisoft/yii2": "2.*",
+        "bower-asset/ContentTools": "1.*",
         "yiisoft/yii2-imagine": "~2.0.0"
     },
     "autoload": {

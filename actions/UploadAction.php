@@ -1,5 +1,13 @@
 <?php
 
+namespace bizley\contenttools\actions;
+
+use bizley\contenttools\models\ImageForm;
+use Yii;
+use yii\base\Action;
+use yii\helpers\Json;
+use yii\web\UploadedFile;
+
 /**
  * @author Paweł Bizley Brzozowski
  * @version 1.0
@@ -10,36 +18,31 @@
  * ContentTools was created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
- */
-
-namespace bizley\contenttools\actions;
-
-use bizley\contenttools\models\ImageForm;
-use Yii;
-use yii\base\Action;
-use yii\helpers\Json;
-use yii\web\UploadedFile;
-
-/**
- * Example action prepared for the yii2-content-tools.
+ * 
+ * Example action prepared for the Yii 2 ContentTools.
+ * 
  * This action handles validation of the uploaded image and saving it.
+ * 
  * Validation is done using the ImageForm.
  * Action returns the size and url of uploaded image.
  */
 class UploadAction extends Action
 {
 
+    /**
+     * @inheritdoc
+     */
     public function run()
     {
         if (Yii::$app->request->isPost) {
-            $model = new ImageForm();
+            $model = new ImageForm;
             $model->image = UploadedFile::getInstanceByName('image');
             if ($model->validate()) {
                 if ($model->upload()) {
                     list($width, $height) = getimagesize($model->url);
                     return Json::encode([
                         'size' => [$width, $height],
-                        'url'  => '/' . $model->url
+                        'url'  => $model->url
                     ]);
                 }
             }

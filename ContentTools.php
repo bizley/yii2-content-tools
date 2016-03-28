@@ -1,5 +1,17 @@
 <?php
 
+namespace bizley\contenttools;
+
+use bizley\contenttools\assets\ContentToolsAsset;
+use bizley\contenttools\assets\ContentToolsImagesAsset;
+use bizley\contenttools\assets\ContentToolsTranslationsAsset;
+use Yii;
+use yii\base\InvalidConfigException;
+use yii\base\Widget;
+use yii\helpers\Html;
+use yii\helpers\Url;
+use yii\web\View;
+
 /**
  * @author Paweł Bizley Brzozowski
  * @version 1.0
@@ -10,38 +22,25 @@
  * ContentTools was created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
- */
-
-namespace bizley\contenttools;
-
-use bizley\contenttools\assets\ContentToolsAsset;
-use bizley\contenttools\assets\ContentToolsImagesAsset;
-use bizley\contenttools\assets\ContentToolsTranslationsAsset;
-use Yii;
-use yii\base\InvalidConfigException;
-use yii\base\Widget;
-use yii\helpers\Html;
-use yii\web\View;
-
-/**
+ * 
  * ContentTools editor implementation for Yii 2.
  * 
  * Wrap any part of the content with 
- * <?php bizley\contenttools\ContentTools::begin(); ?> and 
- * <?php bizley\contenttools\ContentTools::end(); ?>.
+ * <?php \bizley\contenttools\ContentTools::begin(); ?> and 
+ * <?php \bizley\contenttools\ContentTools::end(); ?>.
  * 
  * ~~~
- * <?php bizley\contenttools\ContentTools::begin(); ?>
+ * <?php \bizley\contenttools\ContentTools::begin(); ?>
  * This is the part of view that is editable.
  * <p>There are paragraphs</p>
  * <div>and more...</div>
- * <?php bizley\contenttools\ContentTools::end(); ?>
+ * <?php \bizley\contenttools\ContentTools::end(); ?>
  * ~~~
  * 
  * You can use the widget multiple times on one page.
  * 
- * ContentTools saves content and uploaded images asynchronously and it requires 
- * some preparation on the backend side.
+ * Yii 2 ContentTools saves content and uploaded images asynchronously and it 
+ * requires some preparation on the backend side.
  * You have to create few controllers' actions:
  * - "upload new image" action,
  * - "rotate uploaded image" action,
@@ -49,9 +48,9 @@ use yii\web\View;
  * - "save content" action.
  * 
  * Three first actions are already prepared if you don't want any special 
- * operations. You can find them in 'actions' folder.
+ * operations. You can find them in '/vendor/bizley/contenttools/actions' folder.
  * - UploadAction - takes care of validating the uploaded images using 
- * bizley\contenttools\models\ImageForm (jpg, png and gif images are allowed, 
+ * \bizley\contenttools\models\ImageForm (jpg, png and gif images are allowed, 
  * maximum width and height is 1000px and maximum size is 2MB), images are 
  * saved in 'content-tools-uploads' folder accessible from web.
  * - RotateAction - takes care of rotating the uploaded image using Imagine 
@@ -75,15 +74,15 @@ use yii\web\View;
  * public function actions()
  * {
  *      return [
- *          'content-tools-image-upload' => bizley\contenttools\actions\UploadAction::className(),
- *          'content-tools-image-insert' => bizley\contenttools\actions\InsertAction::className(),
- *          'content-tools-image-rotate' => bizley\contenttools\actions\RotateAction::className(),
+ *          'content-tools-image-upload' => \bizley\contenttools\actions\UploadAction::className(),
+ *          'content-tools-image-insert' => \bizley\contenttools\actions\InsertAction::className(),
+ *          'content-tools-image-rotate' => \bizley\contenttools\actions\RotateAction::className(),
  *      ];
  * }
  * ~~~
  * 
- * The last "save content" action is not prepared so go ahead and take care of 
- * it. Default configuration for this is:
+ * The last "save content" action is not prepared because it depends on the 
+ * business logic of your application. Default configuration for this is:
  * 
  * ~~~
  * 'saveEngine' => [
@@ -95,28 +94,37 @@ class ContentTools extends Widget
 {
 
     /**
+     * @var string Page identifier. If null it will be set to the current url.
+     */
+    public $page;
+    
+    /**
      * @var string Tag that will be used to wrap the editable content.
      */
     public $tag = 'div';
     
     /**
-     * @var string Name of the data-* attribute that will store the identifier of editable region.
+     * @var string Name of the data-* attribute that will store the identifier 
+     * of editable region.
      */
     public $dataName = 'name';
     
     /**
-     * @var string Name of the data-* attribute that will mark the region as editable.
+     * @var string Name of the data-* attribute that will mark the region as 
+     * editable.
      */
     public $dataInit = 'editable';
     
     /**
-     * @var array Array of html options that will be applied to editable region's tag.
+     * @var array Array of html options that will be applied to editable 
+     * region's tag.
      */
     public $options = [];
     
     /**
-     * @var array|boolean Array of the urls of the image actions OR false to 
-     * switch off the default image engine (you will have to prepare js for handling images on your own).
+     * @var array|boolean Array of the urls of the image actions OR 
+     * false to switch off the default image engine (you will have to prepare 
+     * js for handling images on your own).
      */
     public $imagesEngine = [
         'upload' => '/site/content-tools-image-upload',
@@ -126,7 +134,8 @@ class ContentTools extends Widget
     
     /**
      * @var array|boolean Array with the url of the content saving action OR 
-     * false to switch off the default saving engine (you will have to prepare js for handling content saving on your own).
+     * false to switch off the default saving engine (you will have to prepare 
+     * js for handling content saving on your own).
      */
     public $saveEngine = [
         'save' => '/site/save-content',
@@ -138,14 +147,15 @@ class ContentTools extends Widget
      * ~~~
      * 'Name of the style' => [
      *      'class' => 'Name of the CSS class',
-     *      'tags'  => [Array of the html tags this can be applied to] or 'comma-separated list of the html tags this can be applied to'
+     *      'tags'  => // [Array of the html tags this can be applied to] or 
+     *                 // 'comma-separated list of the html tags this can be applied to'
      * ],
      * ~~~
      * Example:
      * ~~~
      * 'Bootstrap Green' => [
      *      'class' => 'text-success',
-     *      'tags'  => ['p', 'h2', 'h1']
+     *      'tags'  => ['p', 'h2', 'h1'] // or 'p,h2,h1'
      * ],
      * ~~~
      * 'tags' key is optional and if omitted style can be applied to every element.
@@ -154,7 +164,8 @@ class ContentTools extends Widget
     
     /**
      * @var boolean|string Boolean flag or language code of the widget translation. 
-     * You can see the list of prepared translations in 'ContentTools/translations' folder.
+     * You can see the list of prepared translations in 
+     * 'vendor/bower/ContentTools/translations' folder.
      * false means that widget will not be translated (default language is English).
      * true means that widget will be translated using the application language.
      * If this parameter is a string widget tries to load the translation file 
@@ -201,16 +212,17 @@ class ContentTools extends Widget
         $this->_global = isset($this->getView()->params[self::GLOBAL_PARAMS_KEY]);
         if ($this->_global) {
             $globalConfig = $this->getView()->params[self::GLOBAL_PARAMS_KEY];
+            $this->page         = $globalConfig['page'];
             $this->dataName     = $globalConfig['dataName'];
             $this->dataInit     = $globalConfig['dataInit'];
             $this->imagesEngine = $globalConfig['imagesEngine'];
             $this->saveEngine   = $globalConfig['saveEngine'];
             $this->language     = $globalConfig['language'];
             $this->_addedStyles = $globalConfig['styles'];
-        }
-        else {
+        } else {
             if ($this->globalConfig) {
                 $this->getView()->params[self::GLOBAL_PARAMS_KEY] = [
+                    'page'         => $this->page,
                     'dataName'     => $this->dataName,
                     'dataInit'     => $this->dataInit,
                     'imagesEngine' => $this->imagesEngine,
@@ -223,50 +235,69 @@ class ContentTools extends Widget
     }
     
     /**
-     * Returns the default js part for saving the content if saveEngine is not set to false.
-     * saveEngine should be false or the array with 'save' key.
+     * Returns the default js part for saving the content if saveEngine is not 
+     * set to false. saveEngine should be boolean false or the array with 
+     * 'save' key.
      * @return string
      * @throws InvalidConfigException
      */
     public function initSaveEngine()
     {
+        $js = '';
         if ($this->saveEngine !== false) {
             if (empty($this->saveEngine['save'])) {
                 throw new InvalidConfigException('Invalid options for the saveEngine configuration!');
             }
+            $csrf_param = Yii::$app->request->csrfParam;
+            $csrf_token = Yii::$app->request->csrfToken;
             
-            return ";editor.bind('save',function(regions){" .
-                "var name,payload,xhr;" .
-                "this.busy(true);" .
-                "payload=new FormData();" .
-                "for(name in regions) {" .
-                    "if(regions.hasOwnProperty(name)){" .
-                        "payload.append(name,regions[name]);" .
-                    "}" .
-                "}" .
-                "payload.append('" . Yii::$app->request->csrfParam . "','" . Yii::$app->request->csrfToken . "');" .
-                "var onStateChange=function(event){" .
-                    "if(parseInt(event.target.readyState)===4){" .
-                        "editor.busy(false);" .
-                        "if(parseInt(event.target.status)===200){" .
-                            "response=JSON.parse(event.target.responseText);" .
-                            "if(response.errors){" .
-                                "for(var k in response.errors)console.log(response.errors[k]);" .
-                                "new ContentTools.FlashUI('no');" .
-                            "}" .
-                            "else new ContentTools.FlashUI('ok');" .
-                        "} else {" .
-                            "new ContentTools.FlashUI('no');" .
-                        "}" .
-                    "}" .
-                "};" .
-                "xhr = new XMLHttpRequest();" .
-                "xhr.addEventListener('readystatechange',onStateChange);" .
-                "xhr.open('POST','" . $this->saveEngine['save'] . "');" .
-                "xhr.send(payload);" .
-            "});";
+            $page = $this->page;
+            if (empty($page)) {
+                $page = Url::current();
+            }
+            
+            $js = <<<JS
+editor.addEventListener('saved', function (event) {
+    var name, payload, regions, xhr;
+
+    regions = event.detail().regions;
+    if (Object.keys(regions).length == 0) return;
+
+    this.busy(true);
+
+    payload = new FormData();
+    for (name in regions) {
+        if (regions.hasOwnProperty(name)) {
+            payload.append(name, regions[name]);
         }
-        return '';
+    }
+    payload.append('$csrf_param', '$csrf_token');
+    payload.append('page', '$page');
+                    
+    function onStateChange (event) {
+        if (parseInt(event.target.readyState) === 4) {
+            editor.busy(false);
+            if (parseInt(event.target.status) === 200) {
+                response = JSON.parse(event.target.responseText);
+                if (response.errors) {
+                    for (var k in response.errors) console.log(response.errors[k]);
+                    new ContentTools.FlashUI('no');
+                } else {
+                    new ContentTools.FlashUI('ok');
+                }
+            } else {
+                new ContentTools.FlashUI('no');
+            }
+        }
+    };
+    xhr = new XMLHttpRequest();
+    xhr.addEventListener('readystatechange', onStateChange);
+    xhr.open('POST', '{$this->saveEngine['save']}');
+    xhr.send(payload);
+});
+JS;
+        }
+        return $js;
     }
 
     /**
@@ -276,12 +307,17 @@ class ContentTools extends Widget
     public function initEditor()
     {
         ContentToolsAsset::register($this->getView());
-        $this->getView()->registerJs(";window.addEventListener('load',function(){" .
-            "var editor;" .
-            "editor=ContentTools.EditorApp.get();" .
-            "editor.init('*[" . static::dataAttribute($this->dataInit) . "]','" . static::dataAttribute($this->dataName) . "');" .
-            $this->initSaveEngine() .
-        "});", View::POS_END);
+        $data_init = static::dataAttribute($this->dataInit);
+        $data_name = static::dataAttribute($this->dataName);
+        $js = <<<JS
+;window.addEventListener('load', function () {
+    var editor;
+    editor = ContentTools.EditorApp.get();
+    editor.init('*[$data_init]', '$data_name');
+    {$this->initSaveEngine()}
+});
+JS;
+        $this->getView()->registerJs($js, View::POS_END);
     }
     
     /**
@@ -293,39 +329,47 @@ class ContentTools extends Widget
             $this->language = Yii::$app->language;
         }
         if ($this->language !== false) {
-            
             $lang      = strtolower(basename($this->language));
             $shortlang = strlen($lang) > 2 ? substr($lang, 0, 2) : null;
             $assets    = ContentToolsTranslationsAsset::register($this->getView());
+            $baseAUrl  = $assets ? $assets->baseUrl : '';
             if (!empty($shortlang)) {
-                $this->getView()->registerJs(";var loadTranslation=function(lang,next){" .
-                        "var xhr=new XMLHttpRequest();" .
-                        "xhr.open('GET','" . ($assets ? $assets->baseUrl : '') . "/'+lang+'.json',true);" .
-                        "xhr.addEventListener('readystatechange',function(event){" .
-                            "var translations;" .
-                            "if(parseInt(event.target.readyState)===4){" .
-                                "if(parseInt(event.target.status)===200){" .
-                                    "translations=JSON.parse(event.target.responseText);" .
-                                    "ContentEdit.addTranslations(lang,translations);" .
-                                    "ContentEdit.LANGUAGE=lang;" .
-                                "}else{if(next===true)loadTranslation('$shortlang',false);}" .
-                            "}" .
-                        "});" .
-                        "xhr.send(null);" .
-                    "};loadTranslation('$lang',true);", View::POS_END);
+                $js = <<<JS
+;var loadTranslation = function (lang, next) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '$baseAUrl/' + lang + '.json', true);
+    xhr.addEventListener('readystatechange', function (event) {
+        var translations;
+        if (parseInt(event.target.readyState) === 4) {
+            if (parseInt(event.target.status) === 200) {
+                translations = JSON.parse(event.target.responseText);
+                ContentEdit.addTranslations(lang, translations);
+                ContentEdit.LANGUAGE = lang;
+            } else {
+                if (next === true) loadTranslation('$shortlang', false);
             }
-            else {
-                $this->getView()->registerJs(";var xhr=new XMLHttpRequest();" .
-                    "xhr.open('GET','" . ($assets ? $assets->baseUrl : '') . "/$lang.json',true);" .
-                    "xhr.addEventListener('readystatechange',function(event){" .
-                        "var translations;" .
-                        "if(parseInt(event.target.readyState)===4&&parseInt(event.target.status)===200){" .
-                            "translations=JSON.parse(event.target.responseText);" .
-                            "ContentEdit.addTranslations('$lang',translations);" .
-                            "ContentEdit.LANGUAGE='$lang';" .
-                        "}" .
-                    "});" .
-                    "xhr.send(null);", View::POS_END);
+        }
+    });
+    xhr.send(null);
+};
+loadTranslation('$lang', true);
+JS;
+                $this->getView()->registerJs($js, View::POS_END);
+            } else {
+                $js = <<<JS
+;var xhr = new XMLHttpRequest();
+xhr.open('GET', '$baseAUrl/$lang.json', true);
+xhr.addEventListener('readystatechange', function (event) {
+    var translations;
+    if (parseInt(event.target.readyState) === 4 && parseInt(event.target.status) === 200) {
+        translations = JSON.parse(event.target.responseText);
+        ContentEdit.addTranslations('$lang', translations);
+        ContentEdit.LANGUAGE = '$lang';
+    }
+});
+xhr.send(null);
+JS;
+                $this->getView()->registerJs($js, View::POS_END);
             }
         }
     }
@@ -344,11 +388,10 @@ class ContentTools extends Widget
             }
             ContentToolsImagesAsset::register($this->getView());
             $this->registerCsrfToken();
-            $this->getView()->registerJs(";var _imagesUrl=['" . $this->imagesEngine['upload'] . "','" . $this->imagesEngine['rotate'] . "','" . $this->imagesEngine['insert'] . "'];", View::POS_BEGIN);
-        }
-        else {
+            $this->getView()->registerJs(";var _CTImagesUrl = ['{$this->imagesEngine['upload']}', '{$this->imagesEngine['rotate']}', '{$this->imagesEngine['insert']}'];", View::POS_BEGIN);
+        } else {
             $this->registerCsrfToken(true);
-            $this->getView()->registerJs(";var _imagesUrl=[];", View::POS_BEGIN);
+            $this->getView()->registerJs(";var _CTImagesUrl = [];", View::POS_BEGIN);
         }
     }
     
@@ -358,7 +401,8 @@ class ContentTools extends Widget
      */
     public function registerCsrfToken($empty = false)
     {
-        $this->getView()->registerJs(";var _csrf=[" . ($empty ? '' : "'" . Yii::$app->request->csrfParam . "','" . Yii::$app->request->csrfToken . "'") . "];", View::POS_BEGIN);
+        $csrf = $empty ? '' : "'" . Yii::$app->request->csrfParam . "', '" . Yii::$app->request->csrfToken . "'";
+        $this->getView()->registerJs(";var _CTCSRF = [$csrf];", View::POS_BEGIN);
     }
     
     /**
@@ -378,29 +422,30 @@ class ContentTools extends Widget
                     throw new InvalidConfigException('Invalid options for styles configuration!');
                 }
                 if (empty($this->_addedStyles) || !in_array(Html::encode($name), $this->_addedStyles)) {
-                    $tmp = "new ContentTools.Style('" . Html::encode($name) . "','" . Html::encode($style['class']) . "'";
+                    $tmp = "new ContentTools.Style('" . Html::encode($name) . "', '" . Html::encode($style['class']) . "'";
                     if (!empty($style['tags'])) {
                         $addTags = [];
                         if (is_string($style['tags'])) {
                             $tags = explode(',', $style['tags']);
                             foreach ($tags as $tag) {
-                                if ($tag !== '') {
-                                    $addTags[] = str_replace("'", '', trim($tag));
+                                $possible_tag = str_replace("'", '', trim($tag));
+                                if (!empty($possible_tag)) {
+                                    $addTags[] = $possible_tag;
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             foreach ($style['tags'] as $tag) {
                                 if (!is_string($tag)) {
                                     throw new InvalidConfigException('Invalid options for styles configuration!');
                                 }
-                                if ($tag !== '') {
-                                    $addTags[] = str_replace("'", '', trim($tag));
+                                $possible_tag = str_replace("'", '', trim($tag));
+                                if (!empty($possible_tag)) {
+                                    $addTags[] = $possible_tag;
                                 }
                             }
                         }
                         if (!empty($addTags)) {
-                            $tmp .= ",['" . implode("','", $addTags) . "']";
+                            $tmp .= ", ['" . implode("','", $addTags) . "']";
                         }
                     }
                     $tmp .= ")";
@@ -411,7 +456,7 @@ class ContentTools extends Widget
                 }
             }
             if (!empty($newStyles)) {
-                $this->getView()->registerJs(";ContentTools.StylePalette.add([" . implode(',', $newStyles) . "]);", View::POS_END);
+                $this->getView()->registerJs("ContentTools.StylePalette.add([" . implode(',', $newStyles) . "]);", View::POS_END);
             }
         }
     }
@@ -439,6 +484,9 @@ class ContentTools extends Widget
     public function init()
     {
         parent::init();
+        if (!empty($this->page) && !is_string($this->page)) {
+            throw new InvalidConfigException('Invalid page configuration!');
+        }
         if (!is_string($this->tag)) {
             throw new InvalidConfigException('Invalid tag configuration!');
         }
@@ -487,7 +535,10 @@ class ContentTools extends Widget
     public function prepareOptions()
     {
         return array_merge(
-                [static::dataAttribute($this->dataInit) => true, static::dataAttribute($this->dataName) => $this->id],
+                [
+                    static::dataAttribute($this->dataInit) => true, 
+                    static::dataAttribute($this->dataName) => $this->id
+                ],
                 $this->options
             );
     }

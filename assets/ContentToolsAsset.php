@@ -1,5 +1,9 @@
 <?php
 
+namespace bizley\contenttools\assets;
+
+use yii\web\AssetBundle;
+
 /**
  * @author Paweł Bizley Brzozowski
  * @version 1.0
@@ -10,24 +14,15 @@
  * ContentTools was created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
- */
-
-namespace bizley\contenttools\assets;
-
-use yii\web\AssetBundle;
-
-/**
- * The ContentTools files.
- * As soon as the author of ContentTools adds it to Bower or NPM packages list 
- * I will remove the ContentTools folder so it will be downloaded using 
- * composer asset plugin.
+ * 
+ * The ContentTools assets.
  */
 class ContentToolsAsset extends AssetBundle
 {
     /**
      * @inheritdoc
      */
-    public $sourcePath = '@vendor/bizley/contenttools/ContentTools/build';
+    public $sourcePath = '@bower/ContentTools/build';
     
     /**
      * @inheritdoc
@@ -37,5 +32,9 @@ class ContentToolsAsset extends AssetBundle
     /**
      * @inheritdoc
      */
-    public $js = ['content-tools.min.js'];
+    public function init()
+    {
+        $this->js[] = 'content-tools' . (YII_DEBUG ? '' : '.min') . '.js';
+        parent::init();
+    }
 }

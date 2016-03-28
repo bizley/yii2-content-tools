@@ -1,5 +1,13 @@
 <?php
 
+namespace bizley\contenttools\models;
+
+use Exception;
+use Yii;
+use yii\base\Model;
+use yii\helpers\FileHelper;
+use yii\web\UploadedFile;
+
 /**
  * @author Paweł Bizley Brzozowski
  * @version 1.0
@@ -10,17 +18,11 @@
  * ContentTools was created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
- */
-
-namespace bizley\contenttools\models;
-
-use yii\base\Model;
-use yii\helpers\FileHelper;
-
-/**
+ * 
  * This model is used by UploadAction to validate and save the image uploaded 
- * through ContentTools editor.
- * Images are stored in the 'content-tools-uploads' folder.
+ * through Yii 2 ContentTools editor.
+ * 
+ * Images are stored in the 'content-tools-uploads' web accessible folder.
  */
 class ImageForm extends Model
 {
@@ -54,10 +56,15 @@ class ImageForm extends Model
      */
     public function upload()
     {
-        if ($this->validate()) {
-            FileHelper::createDirectory(self::UPLOAD_DIR);
-            $this->url = self::UPLOAD_DIR . '/' . $this->image->baseName . '.' . $this->image->extension;
-            return $this->image->saveAs($this->url);
+        try {
+            if ($this->validate()) {
+                $save_path = FileHelper::normalizePath(Yii::getAlias('@app/web/' . self::UPLOAD_DIR));
+                FileHelper::createDirectory($save_path);
+                $this->url = Yii::getAlias('@web/' . self::UPLOAD_DIR . '/' . $this->image->baseName . '.' . $this->image->extension);
+                return $this->image->saveAs(FileHelper::normalizePath($save_path . '/' . $this->image->baseName . '.' . $this->image->extension));
+            }
+        } catch (Exception $e) {
+            Yii::error($e->getMessage());
         }
         return false;
     }
