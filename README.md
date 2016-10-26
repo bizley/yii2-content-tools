@@ -1,5 +1,9 @@
 # yii2-content-tools
 
+![Latest Stable Version](https://img.shields.io/packagist/v/bizley/contenttools.svg)
+![Total Downloads](https://img.shields.io/packagist/dt/bizley/contenttools.svg)
+![License](https://img.shields.io/packagist/l/bizley/contenttools.svg)
+
 ContentTools editor implementation for Yii 2.
 
 ## ContentTools
