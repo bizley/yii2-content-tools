@@ -22,5 +22,5 @@ class ContentToolsTranslationsAsset extends AssetBundle
     /**
      * @inheritdoc
      */
-    public $sourcePath = '@bower/ContentTools/translations';
+    public $sourcePath = '@bower/contenttools/translations';
 }
