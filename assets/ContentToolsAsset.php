@@ -22,7 +22,7 @@ class ContentToolsAsset extends AssetBundle
     /**
      * @inheritdoc
      */
-    public $sourcePath = '@bower/ContentTools/build';
+    public $sourcePath = '@bower/contenttools/build';
     
     /**
      * @inheritdoc
