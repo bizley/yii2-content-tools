@@ -6,12 +6,12 @@ use yii\web\AssetBundle;
 
 /**
  * @author Paweł Bizley Brzozowski
- * @version 1.0
+ * @version 1.1.0
  * @license Apache 2.0
- * https://github.com/bizley-code/yii2-content-tools
+ * https://github.com/bizley/yii2-content-tools
  * http://www.yiiframework.com/extension/yii2-content-tools
  * 
- * ContentTools was created by Anthony Blackshaw
+ * ContentTools has been created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
  * 
@@ -20,7 +20,7 @@ use yii\web\AssetBundle;
 class ContentToolsTranslationsAsset extends AssetBundle
 {
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public $sourcePath = '@bower/contenttools/translations';
 }

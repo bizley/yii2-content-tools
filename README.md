@@ -16,17 +16,17 @@ Add the package to your composer.json:
 
     {
         "require": {
-            "bizley/contenttools": "1.0"
+            "bizley/contenttools": "~1.1.0"
         }
     }
 
-and run ```composer update``` or alternatively run ```composer require bizley/contenttools```
+and run `composer update` or alternatively run `composer require bizley/contenttools`
 
 ## Usage
 
 ### 1. The widget.
 
-Wrap any part of the content with ```<?php \bizley\contenttools\ContentTools::begin(); ?>``` and ```<?php \bizley\contenttools\ContentTools::end(); ?>```.
+Wrap any part of the content with `<?php \bizley\contenttools\ContentTools::begin(); ?>` and `<?php \bizley\contenttools\ContentTools::end(); ?>`.
 
     <?php \bizley\contenttools\ContentTools::begin(); ?>
     This is the part of view that is editable.
@@ -47,12 +47,12 @@ You have to create few controllers' actions:
  - "save content" action.
 
 Three first actions are already prepared if you don't want any special operations. You can find them in 'actions' folder.
-- _UploadAction_ - takes care of validating the uploaded images using \bizley\contenttools\models\ImageForm (jpg, png and gif images are allowed, 
-maximum width and height is 1000px and maximum size is 2MB), images are saved in 'content-tools-uploads' folder accessible from web.
-- _RotateAction_ - takes care of rotating the uploaded image using Imagine library (through yii2-imagine required in the composer.json).
+- _UploadAction_ - takes care of validating the uploaded images using `\bizley\contenttools\models\ImageForm` (jpg, png and gif images are allowed, 
+maximum width and height is 1000px and maximum size is 2 MB), images are saved in 'content-tools-uploads' folder accessible from web.
+- _RotateAction_ - takes care of rotating the uploaded image using Imagine library (through `yii2-imagine` extension required in the composer.json).
 - _InsertAction_ - takes care of inserting image into the content with optional cropping using Imagine library.
 
-The default option for the image urls is:
+The default option for the image URLs is:
 
     'imagesEngine' => [
         'upload' => '/site/content-tools-image-upload',
@@ -71,7 +71,7 @@ So if you don't want to change the 'imagesEngine' parameter add in your SiteCont
         ];
     }
 
-The last "save content" action is not prepared because it depends on the business logic of your application. See *Saving content* part at the end of this file. 
+The last "save content" action is not prepared because it depends on the business logic of your application. See *Saving content* part at the end of this file.  
 Default configuration for this is:
 
     'saveEngine' => [
@@ -81,38 +81,38 @@ Default configuration for this is:
 
 ## Options
 
-You can add options for the widget by passing the configuration array in the begin() method.
+You can add options for the widget by passing the configuration array in the `begin()` method.
 
 ### id
 
-_default:_ ```null``` 
+_default:_ `null`  
 Identifier of the editable region (must be unique). 
 If left empty it is automatically set to 'contentToolsXXX' where XXX is the number of next widget.
 
 ### page
 
-_default:_ ```null``` 
-Page identifier. If null it will be set to the current url.
+_default:_ `null`  
+Page identifier. If `null` it is set to the current URL.
 
 ### tag
 
-_default:_ ```'div'``` 
-Tag that will be used to wrap the editable content.
+_default:_ `'div'`  
+HTML tag that is used to wrap the editable content.
 
 ### dataName
 
-_default:_ ```'name'``` 
-Name of the data-* attribute that will store the identifier of editable region.
+_default:_ `'name'`  
+Name of the `data-*` attribute that stores the identifier of editable region.
 
 ### dataInit
 
-_default:_ ```'editable'``` 
-Name of the data-* attribute that will mark the region as editable.
+_default:_ `'editable'`  
+Name of the `data-*` attribute that marks the region as editable.
 
 ### options
 
-_default:_ ```[]``` 
-Array of html options that will be applied to editable region's tag.
+_default:_ `[]`  
+Array of HTML options that are applied to editable region's tag.
 
 ### imagesEngine
 
@@ -123,7 +123,8 @@ _default:_
         'rotate' => '/site/content-tools-image-rotate',
         'insert' => '/site/content-tools-image-insert',
     ]
-Array of the urls of the image actions *OR* ```false``` to switch off the default image engine (you will have to prepare js for handling images on your own).
+    
+Array of the URLs of the image actions *OR* `false` to switch off the default image engine (you will have to prepare JS for handling images on your own).
 
 ### saveEngine
 
@@ -132,13 +133,14 @@ _default:_
     [
         'save' => '/site/save-content',
     ]
-Array with the url of the content saving action *OR* ```false``` to switch off the default saving engine (you will have to prepare js for handling content saving on your own).
+    
+Array with the URL of the content saving action *OR* `false` to switch off the default saving engine (you will have to prepare JS for handling content saving on your own).
 
 ### styles
 
-_default:_ ```[]``` 
+_default:_ `[]`  
 Array of styles that can be applied to the edited content. 
-Every style should be added in array like:
+Every style should be added in separate array like:
 
     'Name of the style' => [
         'class' => 'Name of the CSS class',
@@ -156,32 +158,32 @@ Example:
 
 ### language
 
-_default:_ ```false``` 
-Boolean flag or language code of the widget translation. You can see the list of prepared translations in 'ContentTools/translations' folder. 
-```false``` means that widget will not be translated (default language is English). 
-```true``` means that widget will be translated using the application language. 
-If this parameter is a string widget tries to load the translation file with the given name. 
-If it cannot be found and string is longer that 2 characters widget tries again this time with parameter shortened to 2 characters. 
+_default:_ `false`  
+Boolean flag or language code of the widget translation. You can see the list of prepared translations in '@bower/contenttools/translations' folder.  
+`false` means that widget will not be translated (default language is English).  
+`true` means that widget will be translated using the application language.  
+If this parameter is a string widget tries to load the translation file with the given name.  
+If it cannot be found and string is longer that 2 characters widget tries again this time with parameter shortened to 2 characters.  
 If again it cannot be found language sets back to default.
 
 ### globalConfig
 
-_default:_ ```true``` 
-Boolean flag whether the configuration should be global. 
-Global configuration means that every succeeding widget ignores _page_, _tag_, _dataName_, _dataInit_, _imagesEngine_, _saveEngine_ and _language_ parameters 
+_default:_ `true`  
+Boolean flag whether the configuration should be global.  
+Global configuration means that every succeeding widget ignores _page_, _tag_, _dataName_, _dataInit_, _imagesEngine_, _saveEngine_, and _language_ parameters 
 and sets them to be the same as in the first one. Also _styles_ are added only if they've got unique names.
 
 
 ## Actions callbacks
 
-The default js image callbacks assume the following action response:
+The default JS image callbacks assume the following action response:
 
     {
         'size': [image-width-in-px, image-height-in-px],
         'url': image-url
     }
 
-with optional ```'alt'``` for insert-action. In case of any errors response should be:
+with optional `'alt'` for insert-action. In case of any errors response should be:
 
     {
         'errors': [array-of-error-descriptions]
@@ -192,7 +194,7 @@ At the moment errors are only displayed in browser's console (user sees only the
 
 ## Saving content
 
-Action responsible for saving the content should expect the array of every page region data in pairs ```'region-identifier' => 'region-content'```.
+Action responsible for saving the content should expect the array of every page region data in pairs `'region-identifier' => 'region-content'`.
 
 Typical structure could look like this:
 

@@ -10,9 +10,9 @@ use yii\web\UploadedFile;
 
 /**
  * @author Paweł Bizley Brzozowski
- * @version 1.0
+ * @version 1.1.0
  * @license Apache 2.0
- * https://github.com/bizley-code/yii2-content-tools
+ * https://github.com/bizley/yii2-content-tools
  * http://www.yiiframework.com/extension/yii2-content-tools
  * 
  * ContentTools was created by Anthony Blackshaw
@@ -28,25 +28,27 @@ use yii\web\UploadedFile;
  */
 class UploadAction extends Action
 {
-
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function run()
     {
         if (Yii::$app->request->isPost) {
-            $model = new ImageForm;
+            $model = new ImageForm();
             $model->image = UploadedFile::getInstanceByName('image');
             if ($model->validate()) {
                 if ($model->upload()) {
-                    list($width, $height) = getimagesize($model->url);
+                    $imageSizeInfo = @getimagesize($model->url);
+                    if ($imageSizeInfo === false) {
+                        return Json::encode(['errors' => ['Image URL seems to be invalid!']]);
+                    }
+                    list($width, $height) = $imageSizeInfo;
                     return Json::encode([
                         'size' => [$width, $height],
                         'url'  => $model->url
                     ]);
                 }
-            }
-            else {
+            } else {
                 $errors = [];
                 $modelErrors = $model->getErrors();
                 foreach ($modelErrors as $field => $fieldErrors) {
@@ -60,5 +62,6 @@ class UploadAction extends Action
                 return Json::encode(['errors' => $errors]);
             }
         }
+        return Json::encode(['errors' => ['POST data is missing!']]);
     }
 }

@@ -11,12 +11,12 @@ use yii\imagine\Image;
 
 /**
  * @author Paweł Bizley Brzozowski
- * @version 1.0
+ * @version 1.1.0
  * @license Apache 2.0
- * https://github.com/bizley-code/yii2-content-tools
+ * https://github.com/bizley/yii2-content-tools
  * http://www.yiiframework.com/extension/yii2-content-tools
  * 
- * ContentTools was created by Anthony Blackshaw
+ * ContentTools has been created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
  * 
@@ -24,10 +24,9 @@ use yii\imagine\Image;
  * 
  * This action handles the cropping of image.
  * 
- * 'crop' parameter is the list of cropping marks positions in order:
+ * POST 'crop' parameter is the string with comma separated list of cropping marks positions in order:
  * top, left, bottom, right.
- * 
- * Position value can by anything between 0 and 1 so 
+ * Position value can by anything between 0 and 1 so:
  * '0,0,1,1' means full image with no cropping and 
  * '0.25,0.25,0.75,0.75' means that box half the size of the full image in the 
  * center needs to be cropped from it.
@@ -35,13 +34,12 @@ use yii\imagine\Image;
  * Cropping is handled by the Imagine library through yii2-imagine extension.
  * JS engine can add '?_ignore=...' part to the url so it should be removed.
  * If 'crop' parameter is not set image should be inserted in the content as-is.
- * Action returns the size, url and alternative description of image (cropped or not).
+ * Action returns the size, URL, and alternative description of image (cropped or not).
  */
 class InsertAction extends Action
 {
-
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     public function run()
     {
@@ -49,42 +47,47 @@ class InsertAction extends Action
             if (Yii::$app->request->isPost) {
                 $data = Yii::$app->request->post();
                 if (empty($data['url'])) {
-                    throw new InvalidParamException('Invalid insert options!');
+                    throw new InvalidParamException('Parameter "url" is missing!');
                 }
                 $url = trim($data['url']);
-                if (substr($url, 0, 1) == '/') {
+                if (strpos($url, '/') === 0) {
                     $url = substr($url, 1);
                 }
                 if (strpos($url, '?_ignore=') !== false) {
                     $url = substr($url, 0, strpos($url, '?_ignore='));
                 }
+                $imageSizeInfo = @getimagesize($url);
+                if ($imageSizeInfo === false) {
+                    throw new InvalidParamException('Parameter "url" seems to be invalid!');
+                }
                 
-                $crop = [];
                 if (!empty($data['crop'])) {
                     $crop = explode(',', $data['crop']);
                     if (count($crop) !== 4) {
-                        throw new InvalidParamException('Invalid crop options!');
+                        throw new InvalidParamException('Parameter "crop" is invalid!');
                     }
-                    foreach ($crop as $c) {
-                        if (!is_numeric(trim($c)) || trim($c) < 0 || trim($c) > 1) {
-                            throw new InvalidParamException('Invalid crop options!');
+                    $positions = [];
+                    foreach ($crop as $position) {
+                        $position = trim($position);
+                        if (!is_numeric($position) || $position < 0 || $position > 1) {
+                            throw new InvalidParamException('Parameter "crop" contains invalid value!');
                         }
+                        $positions[] = $position;
                     }
-                }
-                if (!empty($crop)) {
-                    list($width, $height) = getimagesize($url);
-                    Image::crop(
-                            $url, 
-                            floor($width * trim($crop[3]) - $width * trim($crop[1])), 
-                            floor($height * trim($crop[2]) - $height * trim($crop[0])), 
-                            [
-                                floor($width * trim($crop[1])), 
-                                floor($height * trim($crop[0]))
-                            ]
-                        )->save($url);
-                }                 
 
-                list($width, $height) = getimagesize($url);
+                    list($width, $height) = $imageSizeInfo;
+                    Image::crop(
+                        $url,
+                        floor($width * $positions[3] - $width * $positions[1]),
+                        floor($height * $positions[2] - $height * $positions[0]),
+                        [
+                            floor($width * $positions[1]),
+                            floor($height * $positions[0])
+                        ]
+                    )->save($url);
+                }
+
+                list($width, $height) = @getimagesize($url);
 
                 return Json::encode([
                     'size' => [$width, $height],
@@ -95,5 +98,6 @@ class InsertAction extends Action
         } catch (Exception $e) {
             return Json::encode(['errors' => [$e->getMessage()]]);
         }
+        return Json::encode(['errors' => ['POST parameters are missing!']]);
     }
 }

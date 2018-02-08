@@ -14,20 +14,19 @@ use yii\web\View;
 
 /**
  * @author Paweł Bizley Brzozowski
- * @version 1.0
+ * @version 1.1.0
  * @license Apache 2.0
- * https://github.com/bizley-code/yii2-content-tools
+ * https://github.com/bizley/yii2-content-tools
  * http://www.yiiframework.com/extension/yii2-content-tools
  * 
- * ContentTools was created by Anthony Blackshaw
+ * ContentTools has been created by Anthony Blackshaw
  * http://getcontenttools.com/
  * https://github.com/GetmeUK/ContentTools
  * 
  * ContentTools editor implementation for Yii 2.
  * 
- * Wrap any part of the content with 
- * <?php \bizley\contenttools\ContentTools::begin(); ?> and 
- * <?php \bizley\contenttools\ContentTools::end(); ?>.
+ * Wrap any part of the content with '<?php \bizley\contenttools\ContentTools::begin(); ?>' and
+ * '<?php \bizley\contenttools\ContentTools::end(); ?>'. Example:
  * 
  * ~~~
  * <?php \bizley\contenttools\ContentTools::begin(); ?>
@@ -39,24 +38,22 @@ use yii\web\View;
  * 
  * You can use the widget multiple times on one page.
  * 
- * Yii 2 ContentTools saves content and uploaded images asynchronously and it 
- * requires some preparation on the backend side.
+ * Yii 2 ContentTools saves content and uploaded images asynchronously and it requires some preparation on the backend side.
  * You have to create few controllers' actions:
  * - "upload new image" action,
  * - "rotate uploaded image" action,
  * - "insert & crop uploaded image" action,
  * - "save content" action.
  * 
- * Three first actions are already prepared if you don't want any special 
- * operations. You can find them in '/vendor/bizley/contenttools/actions' folder.
- * - UploadAction - takes care of validating the uploaded images using 
- * \bizley\contenttools\models\ImageForm (jpg, png and gif images are allowed, 
- * maximum width and height is 1000px and maximum size is 2MB), images are 
- * saved in 'content-tools-uploads' folder accessible from web.
- * - RotateAction - takes care of rotating the uploaded image using Imagine 
- * library (through yii2-imagine required in the composer.json).
- * - InsertAction - takes care of inserting image into the content with optional 
- * cropping using Imagine library.
+ * Three first actions are already prepared if you don't want any special operations. You can find them in
+ * '/vendor/bizley/contenttools/actions' folder:
+ * - bizley\contenttools\actions\UploadAction - takes care of validating the uploaded images using
+ *   bizley\contenttools\models\ImageForm (jpg, png, and gif images are allowed, maximum width and height is 1000px
+ *   and maximum size is 2 MB), images are saved in 'content-tools-uploads' folder accessible from web.
+ * - bizley\contenttools\actions\RotateAction - takes care of rotating the uploaded image using Imagine library
+ *   (through yii2-imagine extension required in the composer.json).
+ * - bizley\contenttools\actions\InsertAction - takes care of inserting image into the content with optional
+ *   cropping using Imagine library.
  * 
  * The default option for the image urls is:
  * 
@@ -67,8 +64,8 @@ use yii\web\View;
  *      'insert' => '/site/content-tools-image-insert',
  * ],
  * ~~~
- * So if you don't want to change the 'imagesEngine' parameter add in your 
- * SiteController:
+ *
+ * So if you don't want to change the 'imagesEngine' parameter add in your SiteController:
  * 
  * ~~~
  * public function actions()
@@ -81,8 +78,8 @@ use yii\web\View;
  * }
  * ~~~
  * 
- * The last "save content" action is not prepared because it depends on the 
- * business logic of your application. Default configuration for this is:
+ * The last "save content" action is not prepared because it depends on the business logic of your application.
+ * Default configuration for this is:
  * 
  * ~~~
  * 'saveEngine' => [
@@ -92,39 +89,34 @@ use yii\web\View;
  */
 class ContentTools extends Widget
 {
-
     /**
-     * @var string Page identifier. If null it will be set to the current url.
+     * @var string Page identifier. If null it is set as the current URL.
      */
     public $page;
     
     /**
-     * @var string Tag that will be used to wrap the editable content.
+     * @var string HTML tag that is used to wrap the editable content.
      */
     public $tag = 'div';
     
     /**
-     * @var string Name of the data-* attribute that will store the identifier 
-     * of editable region.
+     * @var string Name of the data-* attribute that stores the identifier of editable region.
      */
     public $dataName = 'name';
     
     /**
-     * @var string Name of the data-* attribute that will mark the region as 
-     * editable.
+     * @var string Name of the data-* attribute that marks the region as editable.
      */
     public $dataInit = 'editable';
     
     /**
-     * @var array Array of html options that will be applied to editable 
-     * region's tag.
+     * @var array Array of HTML options that are applied to editable region's tag.
      */
     public $options = [];
     
     /**
-     * @var array|boolean Array of the urls of the image actions OR 
-     * false to switch off the default image engine (you will have to prepare 
-     * js for handling images on your own).
+     * @var array|bool Array of the URLs of the image actions OR false to switch off the default image engine
+     * (you need to prepare JS for handling images on your own in the second case).
      */
     public $imagesEngine = [
         'upload' => '/site/content-tools-image-upload',
@@ -133,9 +125,8 @@ class ContentTools extends Widget
     ];
     
     /**
-     * @var array|boolean Array with the url of the content saving action OR 
-     * false to switch off the default saving engine (you will have to prepare 
-     * js for handling content saving on your own).
+     * @var array|bool Array with the URL of the content saving action OR false to switch off the default saving engine
+     * (you need to prepare JS for handling content saving on your own in the second case).
      */
     public $saveEngine = [
         'save' => '/site/save-content',
@@ -143,7 +134,7 @@ class ContentTools extends Widget
     
     /**
      * @var array Array of styles that can be applied to the edited content.
-     * Every style should be added in array like:
+     * Every style should be added in separate array like:
      * ~~~
      * 'Name of the style' => [
      *      'class' => 'Name of the CSS class',
@@ -155,7 +146,7 @@ class ContentTools extends Widget
      * ~~~
      * 'Bootstrap Green' => [
      *      'class' => 'text-success',
-     *      'tags'  => ['p', 'h2', 'h1'] // or 'p,h2,h1'
+     *      'tags'  => ['p', 'h2', 'h1'], // or 'p,h2,h1'
      * ],
      * ~~~
      * 'tags' key is optional and if omitted style can be applied to every element.
@@ -163,24 +154,21 @@ class ContentTools extends Widget
     public $styles = [];
     
     /**
-     * @var boolean|string Boolean flag or language code of the widget translation. 
-     * You can see the list of prepared translations in 
-     * 'vendor/bower/ContentTools/translations' folder.
-     * false means that widget will not be translated (default language is English).
-     * true means that widget will be translated using the application language.
-     * If this parameter is a string widget tries to load the translation file 
-     * with the given name. If it cannot be found and string is longer that 2 
-     * characters widget tries again this time with parameter shortened to 2 
-     * characters. If again it cannot be found language sets back to default.
+     * @var bool|string Boolean flag or language code of the widget translation.
+     * You can see the list of prepared translations in '@bower/contenttools/translations' folder.
+     * false means that widget is not translated (default language is English).
+     * true means that widget is translated using the application's language.
+     * If this parameter is a string widget tries to load the translation file with the given name. If it can not be
+     * found and string is longer that 2 characters widget tries again this time with parameter shortened to 2
+     * characters. If again it can not be found language sets back to default.
      */
     public $language = false;
     
     /**
-     * @var boolean Boolean flag whether the configuration should be global.
-     * Global configuration means that every succeeding widget ignores 'tag', 
-     * 'dataName', 'dataInit', 'imagesEngine', 'saveEngine' and 'language' 
-     * parameters and sets them to be the same as in the first one. Also 'styles' 
-     * are added only if they've got unique names.
+     * @var bool Boolean flag whether the configuration should be global.
+     * Global configuration means that every succeeding widget instance ignores 'tag', 'dataName', 'dataInit',
+     * 'imagesEngine', 'saveEngine', and 'language' parameters and sets them to be the same as in the first one.
+     * Also 'styles' are added only if they've got unique names.
      */
     public $globalConfig = true;
     
@@ -189,23 +177,15 @@ class ContentTools extends Widget
      */
     public static $autoIdPrefix = 'contentTools';
     
-    /**
-     * @var boolean Boolean flag whether global parameters are set or not.
-     */
-    private $_global;
-    
-    /**
-     * @var array List of previously added styles.
-     */
-    private $_addedStyles = [];
-    
     const GLOBAL_PARAMS_KEY = 'content-tools-global-configuration';
-    
+
+    private $_global;
+    private $_addedStyles = [];
+
     /**
      * Checks if global configuration array is set.
      * If so it sets properties to global values.
-     * If not and the globalConfig is set to true the current properties are 
-     * saved in global configuration.
+     * If not and the globalConfig is set to true the current properties are saved in global configuration.
      */
     public function globalConfig()
     {
@@ -235,9 +215,8 @@ class ContentTools extends Widget
     }
     
     /**
-     * Returns the default js part for saving the content if saveEngine is not 
-     * set to false. saveEngine should be boolean false or the array with 
-     * 'save' key.
+     * Returns the default JS part for saving the content if saveEngine is not set to false. saveEngine should be
+     * boolean false or the array with 'save' key.
      * @return string
      * @throws InvalidConfigException
      */
@@ -289,7 +268,7 @@ editor.addEventListener('saved', function (event) {
                 new ContentTools.FlashUI('no');
             }
         }
-    };
+    }
     xhr = new XMLHttpRequest();
     xhr.addEventListener('readystatechange', onStateChange);
     xhr.open('POST', '{$this->saveEngine['save']}');
@@ -310,7 +289,7 @@ JS;
         $data_init = static::dataAttribute($this->dataInit);
         $data_name = static::dataAttribute($this->dataName);
         $js = <<<JS
-;window.addEventListener('load', function () {
+;window.addEventListener('load', function() {
     var editor;
     editor = ContentTools.EditorApp.get();
     editor.init('*[$data_init]', '$data_name');
@@ -397,7 +376,7 @@ JS;
     
     /**
      * Registers CSRF parameters.
-     * @param boolean $empty Whether to add parameters or just set the empty array
+     * @param bool $empty Whether to add parameters or just set the empty array
      */
     public function registerCsrfToken($empty = false)
     {
@@ -421,7 +400,7 @@ JS;
                 if (!empty($style['tags']) && !is_string($style['tags']) && !is_array($style['tags'])) {
                     throw new InvalidConfigException('Invalid options for styles configuration!');
                 }
-                if (empty($this->_addedStyles) || !in_array(Html::encode($name), $this->_addedStyles)) {
+                if (empty($this->_addedStyles) || !in_array(Html::encode($name), $this->_addedStyles, true)) {
                     $tmp = "new ContentTools.Style('" . Html::encode($name) . "', '" . Html::encode($style['class']) . "'";
                     if (!empty($style['tags'])) {
                         $addTags = [];
@@ -448,7 +427,7 @@ JS;
                             $tmp .= ", ['" . implode("','", $addTags) . "']";
                         }
                     }
-                    $tmp .= ")";
+                    $tmp .= ')';
                     $newStyles[] = $tmp;
                     if ($this->globalConfig) {
                         $this->getView()->params[self::GLOBAL_PARAMS_KEY]['styles'][] = Html::encode($name);
@@ -456,14 +435,15 @@ JS;
                 }
             }
             if (!empty($newStyles)) {
-                $this->getView()->registerJs("ContentTools.StylePalette.add([" . implode(',', $newStyles) . "]);", View::POS_END);
+                $this->getView()->registerJs('ContentTools.StylePalette.add([' . implode(',', $newStyles) . ']);', View::POS_END);
             }
         }
     }
-    
+
     /**
      * Closes the widget.
      * Adds engines, styles and translation.
+     * @throws InvalidConfigException
      */
     public function run()
     {

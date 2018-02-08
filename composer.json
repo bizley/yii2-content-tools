@@ -5,18 +5,18 @@
     "keywords": ["contenttools", "yii2", "extension", "widget", "editor", "wysiwyg", "html"],
     "license": "Apache-2.0",
     "support": {
-        "issues": "https://github.com/bizley-code/yii2-content-tools/issues?state=open",
-        "source": "https://github.com/bizley-code/yii2-content-tools"
+        "issues": "https://github.com/bizley/yii2-content-tools/issues",
+        "source": "https://github.com/bizley/yii2-content-tools"
     },
     "authors": [
         {
             "name": "Pawel Bizley Brzozowski",
-            "email": "pb@human-device.com"
+            "email": "pawel@positive.codes"
         }
     ],
     "require": {
-        "yiisoft/yii2": "2.*",
-        "bower-asset/ContentTools": "1.*",
+        "yiisoft/yii2": "~2.0.5",
+        "bower-asset/ContentTools": "^1.0.1",
         "yiisoft/yii2-imagine": "~2.0.0"
     },
     "autoload": {
