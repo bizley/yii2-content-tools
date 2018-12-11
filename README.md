@@ -16,7 +16,7 @@ Add the package to your composer.json:
 
     {
         "require": {
-            "bizley/contenttools": "~1.1.0"
+            "bizley/contenttools": "^1.2"
         }
     }
 
@@ -26,7 +26,7 @@ and run `composer update` or alternatively run `composer require bizley/contentt
 
 ### 1. The widget.
 
-Wrap any part of the content with `<?php \bizley\contenttools\ContentTools::begin(); ?>` and `<?php \bizley\contenttools\ContentTools::end(); ?>`.
+Wrap any part of the content in `\bizley\contenttools\ContentTools::begin();` and `\bizley\contenttools\ContentTools::end();`.
 
     <?php \bizley\contenttools\ContentTools::begin(); ?>
     This is the part of view that is editable.
@@ -47,9 +47,11 @@ You have to create few controllers' actions:
  - "save content" action.
 
 Three first actions are already prepared if you don't want any special operations. You can find them in 'actions' folder.
-- _UploadAction_ - takes care of validating the uploaded images using `\bizley\contenttools\models\ImageForm` (jpg, png and gif images are allowed, 
-maximum width and height is 1000px and maximum size is 2 MB), images are saved in 'content-tools-uploads' folder accessible from web.
-- _RotateAction_ - takes care of rotating the uploaded image using Imagine library (through `yii2-imagine` extension required in the composer.json).
+- _UploadAction_ - takes care of validating the uploaded images using `\bizley\contenttools\models\ImageForm` 
+  (jpg, png and gif images are allowed, maximum width and height is 1000px and maximum size is 2 MB), images are saved 
+  in `content-tools-uploads` folder accessible from web.
+- _RotateAction_ - takes care of rotating the uploaded image using Imagine library (through `yii2-imagine` extension 
+  required in the composer.json).
 - _InsertAction_ - takes care of inserting image into the content with optional cropping using Imagine library.
 
 The default option for the image URLs is:
@@ -60,7 +62,7 @@ The default option for the image URLs is:
         'insert' => '/site/content-tools-image-insert',
     ],
 
-So if you don't want to change the 'imagesEngine' parameter add in your SiteController:
+So if you don't want to change the `imagesEngine` parameter add in your SiteController:
 
     public function actions()
     {
@@ -71,7 +73,12 @@ So if you don't want to change the 'imagesEngine' parameter add in your SiteCont
         ];
     }
 
-The last "save content" action is not prepared because it depends on the business logic of your application. See *Saving content* part at the end of this file.  
+See [Standalone Actions section in Yii 2 Guide](https://www.yiiframework.com/doc/guide/2.0/en/structure-controllers#standalone-actions) 
+for more info about adding actions.
+ 
+The last "save content" action is not prepared because it depends on the business logic of your application. 
+See *Saving content* part at the end of this file.
+  
 Default configuration for this is:
 
     'saveEngine' => [
@@ -124,7 +131,8 @@ _default:_
         'insert' => '/site/content-tools-image-insert',
     ]
     
-Array of the URLs of the image actions *OR* `false` to switch off the default image engine (you will have to prepare JS for handling images on your own).
+Array of the URLs of the image actions *OR* `false` to switch off the default image engine (you will have to prepare JS 
+for handling images on your own).
 
 ### saveEngine
 
@@ -134,12 +142,13 @@ _default:_
         'save' => '/site/save-content',
     ]
     
-Array with the URL of the content saving action *OR* `false` to switch off the default saving engine (you will have to prepare JS for handling content saving on your own).
+Array with the URL of the content saving action *OR* `false` to switch off the default saving engine (you will have to 
+prepare JS for handling content saving on your own).
 
 ### styles
 
 _default:_ `[]`  
-Array of styles that can be applied to the edited content. 
+Array of styles that can be applied to the edited content.  
 Every style should be added in separate array like:
 
     'Name of the style' => [
@@ -154,12 +163,13 @@ Example:
         'tags'  => ['p', 'h2', 'h1']
     ],
 
-'tags' key is optional and if omitted style can be applied to every element.
+`tags` key is optional and if omitted style can be applied to every element.
 
 ### language
 
 _default:_ `false`  
-Boolean flag or language code of the widget translation. You can see the list of prepared translations in '@bower/contenttools/translations' folder.  
+Boolean flag or language code of the widget translation.  
+You can find the list of prepared translations in `@bower/contenttools/translations` folder.  
 `false` means that widget will not be translated (default language is English).  
 `true` means that widget will be translated using the application language.  
 If this parameter is a string widget tries to load the translation file with the given name.  
@@ -170,8 +180,9 @@ If again it cannot be found language sets back to default.
 
 _default:_ `true`  
 Boolean flag whether the configuration should be global.  
-Global configuration means that every succeeding widget ignores _page_, _tag_, _dataName_, _dataInit_, _imagesEngine_, _saveEngine_, and _language_ parameters 
-and sets them to be the same as in the first one. Also _styles_ are added only if they've got unique names.
+Global configuration means that every succeeding widget ignores `page`, `tag`, `dataName`, `dataInit`, `imagesEngine`, 
+`saveEngine`, and `language` parameters and sets them to be the same as in the first one. Also `styles` are added only 
+if they've got unique names.
 
 
 ## Actions callbacks
@@ -194,15 +205,16 @@ At the moment errors are only displayed in browser's console (user sees only the
 
 ## Saving content
 
-Action responsible for saving the content should expect the array of every page region data in pairs `'region-identifier' => 'region-content'`.
+Action responsible for saving the content should expect the array of every page region data in pairs 
+`'region-identifier' => 'region-content'`.
 
 Typical structure could look like this:
 
     [
         'contentTools0' => '...', // HTML content of the contentTools0 region
         'contentTools1' => '...', // HTML content of the contentTools1 region
-        '_csrf'         => '...', // CRSF token value
-        'page'          => '/site/index' // page identifier
+        '_csrf' => '...', // CRSF token value
+        'page' => '/site/index' // page identifier
     ]
 
 Now you just need to validate and save the regions linked to the page with the given identifier.
