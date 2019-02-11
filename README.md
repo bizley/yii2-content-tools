@@ -184,6 +184,12 @@ Global configuration means that every succeeding widget ignores `page`, `tag`, `
 `saveEngine`, and `language` parameters and sets them to be the same as in the first one. Also `styles` are added only 
 if they've got unique names.
 
+### customJs
+
+_default:_ `null`  
+String with custom JS to be initialized with editor.  
+Use `editor` variable to point to instance of `ContentTools.EditorApp.get()`.  
+See http://getcontenttools.com/api/content-tools for more details about CT API.
 
 ## Actions callbacks
 

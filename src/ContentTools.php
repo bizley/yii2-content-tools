@@ -14,7 +14,7 @@ use yii\web\View;
 
 /**
  * @author Paweł Bizley Brzozowski
- * @version 1.2.0
+ * @version 1.3.0
  * @license Apache 2.0
  * https://github.com/bizley/yii2-content-tools
  *
@@ -173,6 +173,14 @@ class ContentTools extends Widget
      * Also `styles` are added only if they've got unique names.
      */
     public $globalConfig = true;
+
+    /**
+     * @var string Custom JS to be initialized with editor.
+     * Use `editor` variable to point to instance of ContentTools.EditorApp.get()
+     * See http://getcontenttools.com/api/content-tools for more details about CT API
+     * @since 1.3.0
+     */
+    public $customJs;
     
     /**
      * {@inheritdoc}
@@ -240,7 +248,7 @@ class ContentTools extends Widget
             }
             
             $js = <<<JS
-editor.addEventListener('saved', function(e) {
+;editor.addEventListener('saved', function(e) {
     var name, payload, regions, xhr;
 
     regions = e.detail().regions;
@@ -289,6 +297,16 @@ JS;
     }
 
     /**
+     * Returns the custom JS part.
+     * @return string
+     * @since 1.3.0
+     */
+    public function initCustom()
+    {
+        return $this->customJs;
+    }
+
+    /**
      * Registers ContentToolsAsset.
      * Initiates ContentTools editor engine.
      */
@@ -304,6 +322,7 @@ JS;
     var editor;
     editor = ContentTools.EditorApp.get();
     editor.init('*[$dataInit]', '$dataName');
+    {$this->initCustom()}
     {$this->initSaveEngine()}
 });
 JS
