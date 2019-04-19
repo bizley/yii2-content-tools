@@ -37,74 +37,73 @@ class InsertAction extends Action
      */
     public function run()
     {
+        if (!Yii::$app->request->isPost) {
+            return Json::encode(['errors' => ['POST parameters are missing!']]);
+        }
+
         try {
-            if (Yii::$app->request->isPost) {
-                $data = Yii::$app->request->post();
+            $data = Yii::$app->request->post();
 
-                if (empty($data['url'])) {
-                    throw new InvalidParamException('Parameter "url" is missing!');
-                }
-
-                $url = trim($data['url']);
-
-                if (strpos($url, '/') === 0) {
-                    $url = substr($url, 1);
-                }
-
-                if (strpos($url, '?_ignore=') !== false) {
-                    $url = substr($url, 0, strpos($url, '?_ignore='));
-                }
-
-                $imageSizeInfo = @getimagesize($url);
-
-                if ($imageSizeInfo === false) {
-                    throw new InvalidParamException('Parameter "url" seems to be invalid!');
-                }
-                
-                if (!empty($data['crop'])) {
-                    $crop = explode(',', $data['crop']);
-
-                    if (count($crop) !== 4) {
-                        throw new InvalidParamException('Parameter "crop" is invalid!');
-                    }
-
-                    $positions = [];
-
-                    foreach ($crop as $position) {
-                        $position = trim($position);
-
-                        if (!is_numeric($position) || $position < 0 || $position > 1) {
-                            throw new InvalidParamException('Parameter "crop" contains invalid value!');
-                        }
-
-                        $positions[] = $position;
-                    }
-
-                    list($width, $height) = $imageSizeInfo;
-
-                    Image::crop(
-                        $url,
-                        floor($width * $positions[3] - $width * $positions[1]),
-                        floor($height * $positions[2] - $height * $positions[0]),
-                        [
-                            floor($width * $positions[1]),
-                            floor($height * $positions[0])
-                        ]
-                    )->save($url);
-                }
-
-                list($width, $height) = @getimagesize($url);
-
-                return Json::encode([
-                    'size' => [$width, $height],
-                    'url' => '/' . $url,
-                    'alt' => basename($url)
-                ]);
+            if (empty($data['url'])) {
+                throw new InvalidParamException('Parameter "url" is missing!');
             }
+
+            $url = trim($data['url']);
+
+            if (strpos($url, '/') === 0) {
+                $url = substr($url, 1);
+            }
+
+            if (strpos($url, '?_ignore=') !== false) {
+                $url = substr($url, 0, strpos($url, '?_ignore='));
+            }
+
+            $imageSizeInfo = @getimagesize($url);
+
+            if ($imageSizeInfo === false) {
+                throw new InvalidParamException('Parameter "url" seems to be invalid!');
+            }
+
+            if (!empty($data['crop'])) {
+                $crop = explode(',', $data['crop']);
+
+                if (count($crop) !== 4) {
+                    throw new InvalidParamException('Parameter "crop" is invalid!');
+                }
+
+                $positions = [];
+
+                foreach ($crop as $position) {
+                    $position = trim($position);
+
+                    if (!is_numeric($position) || $position < 0 || $position > 1) {
+                        throw new InvalidParamException('Parameter "crop" contains invalid value!');
+                    }
+
+                    $positions[] = $position;
+                }
+
+                list($width, $height) = $imageSizeInfo;
+
+                Image::crop(
+                    $url,
+                    floor($width * $positions[3] - $width * $positions[1]),
+                    floor($height * $positions[2] - $height * $positions[0]),
+                    [
+                        floor($width * $positions[1]),
+                        floor($height * $positions[0])
+                    ]
+                )->save($url);
+            }
+
+            return Json::encode([
+                'size' => @getimagesize($url),
+                'url' => '/' . $url,
+                'alt' => basename($url)
+            ]);
+
         } catch (Exception $e) {
             return Json::encode(['errors' => [$e->getMessage()]]);
         }
-
-        return Json::encode(['errors' => ['POST parameters are missing!']]);
     }
 }

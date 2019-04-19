@@ -33,43 +33,42 @@ class RotateAction extends Action
      */
     public function run()
     {
+        if (!Yii::$app->request->isPost) {
+            return Json::encode(['errors' => ['POST parameters are missing!']]);
+        }
+
         try {
-            if (Yii::$app->request->isPost) {
-                $data = Yii::$app->request->post();
+            $data = Yii::$app->request->post();
 
-                if (empty($data['url']) || !in_array($data['direction'], ['CW', 'CCW'], true)) {
-                    throw new InvalidParamException('Invalid rotate options!');
-                }
-                    
-                $url = trim($data['url']);
-
-                if (strpos($url, '/') === 0) {
-                    $url = substr($url, 1);
-                }
-
-                if (strpos($url, '?_ignore=') !== false) {
-                    $url = substr($url, 0, strpos($url, '?_ignore='));
-                }
-
-                $imageSizeInfo = @getimagesize($url);
-
-                if ($imageSizeInfo === false) {
-                    throw new InvalidParamException('Parameter "url" seems to be invalid!');
-                }
-                
-                Image::getImagine()->open($url)->copy()->rotate($data['direction'] === 'CW' ? 90 : -90)->save($url);
-                
-                list($width, $height) = $imageSizeInfo;
-                
-                return Json::encode([
-                    'size' => [$width, $height],
-                    'url' => '/' . $url
-                ]);
+            if (empty($data['url']) || !in_array($data['direction'], ['CW', 'CCW'], true)) {
+                throw new InvalidParamException('Invalid rotate options!');
             }
+
+            $url = trim($data['url']);
+
+            if (strpos($url, '/') === 0) {
+                $url = substr($url, 1);
+            }
+
+            if (strpos($url, '?_ignore=') !== false) {
+                $url = substr($url, 0, strpos($url, '?_ignore='));
+            }
+
+            $imageSizeInfo = @getimagesize($url);
+
+            if ($imageSizeInfo === false) {
+                throw new InvalidParamException('Parameter "url" seems to be invalid!');
+            }
+
+            Image::getImagine()->open($url)->copy()->rotate($data['direction'] === 'CW' ? 90 : -90)->save($url);
+
+            return Json::encode([
+                'size' => $imageSizeInfo,
+                'url' => '/' . $url
+            ]);
+
         } catch (Exception $e) {
            return Json::encode(['errors' => [$e->getMessage()]]);
         }
-
-        return Json::encode(['errors' => ['POST parameters are missing!']]);
     }
 }

@@ -20,18 +20,29 @@ use yii\web\UploadedFile;
  */
 class ImageForm extends Model
 {
+    /**
+     * @deprecated since 1.4.0 - use setUploadDir() and setViewPath() instead
+     */
     const UPLOAD_DIR = 'content-tools-uploads';
 
     /**
      * @var UploadedFile Uploaded image
      */
     public $image;
-    
+
     /**
-     * @var string Web accessible path to the uploaded image
+     * @var string Web accessible path to the uploaded image. This property is automatically filled after successful
+     * upload based on the $viewPath property.
      */
     public $url;
-    
+
+    /**
+     * @var string Path of the uploaded image. This property is automatically filled after successful upload based on
+     * the $uploadDir property.
+     * @since 1.4.0
+     */
+    public $path;
+
     /**
      * {@inheritdoc}
      */
@@ -53,7 +64,31 @@ class ImageForm extends Model
             ]
         ];
     }
-    
+
+    private $_uploadDir;
+
+    /**
+     * Sets image upload folder. This can be Yii alias.
+     * @param string $path
+     * @since 1.4.0
+     */
+    public function setUploadDir($path)
+    {
+        $this->_uploadDir = $path;
+    }
+
+    private $_viewPath;
+
+    /**
+     * Sets web accesible path to upload folder. This can be Yii alias.
+     * @param string $path
+     * @since 1.4.0
+     */
+    public function setViewPath($path)
+    {
+        $this->_viewPath = $path;
+    }
+
     /**
      * Validates and saves the image.
      * Creates the folder to store images if necessary.
@@ -61,16 +96,25 @@ class ImageForm extends Model
      */
     public function upload()
     {
+        if (!$this->validate()) {
+            return false;
+        }
+
         try {
-            if ($this->validate()) {
-                $save_path = FileHelper::normalizePath(Yii::getAlias('@app/web/' . self::UPLOAD_DIR));
+            $save_path = Yii::getAlias($this->_uploadDir);
+            FileHelper::createDirectory($save_path);
 
-                FileHelper::createDirectory($save_path);
+            $image = $this->image->baseName . '.' . $this->image->extension;
 
-                $this->url = Yii::getAlias('@web/' . self::UPLOAD_DIR . '/' . $this->image->baseName . '.' . $this->image->extension);
-
-                return $this->image->saveAs(FileHelper::normalizePath($save_path . '/' . $this->image->baseName . '.' . $this->image->extension));
+            if (!$this->image->saveAs(FileHelper::normalizePath($save_path . '/' . $image))) {
+                return false;
             }
+
+            $this->path = Yii::getAlias($save_path . '/' . $image);
+            $this->url = Yii::getAlias($this->_viewPath . '/' . $image);
+
+            return true;
+
         } catch (Exception $e) {
             Yii::error($e->getMessage());
         }
