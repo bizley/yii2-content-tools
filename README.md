@@ -16,7 +16,7 @@ Add the package to your composer.json:
 
     {
         "require": {
-            "bizley/contenttools": "^1.2"
+            "bizley/contenttools": "^1.4"
         }
     }
 
