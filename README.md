@@ -224,3 +224,5 @@ Typical structure could look like this:
     ]
 
 Now you just need to validate and save the regions linked to the page with the given identifier.
+
+**Example implementation of saving content can be found in the https://github.com/bizley/yii2-content-tools/blob/master/example.php**
