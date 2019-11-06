@@ -101,19 +101,15 @@ class ImageForm extends Model
         }
 
         try {
-            $save_path = Yii::getAlias($this->_uploadDir);
+            // first normalize for alias translating then for OS
+            $save_path = FileHelper::normalizePath(Yii::getAlias(FileHelper::normalizePath($this->_uploadDir, '/')));
             FileHelper::createDirectory($save_path);
 
             $image = $this->image->baseName . '.' . $this->image->extension;
+            $this->path = $save_path . DIRECTORY_SEPARATOR . $image;
+            $this->url = Yii::getAlias(FileHelper::normalizePath($this->_viewPath, '/') . '/' . $image);
 
-            if (!$this->image->saveAs(FileHelper::normalizePath($save_path . '/' . $image))) {
-                return false;
-            }
-
-            $this->path = Yii::getAlias($save_path . '/' . $image);
-            $this->url = Yii::getAlias($this->_viewPath . '/' . $image);
-
-            return true;
+            return $this->image->saveAs($this->path);
 
         } catch (Exception $e) {
             Yii::error($e->getMessage());

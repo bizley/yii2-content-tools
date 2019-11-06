@@ -14,7 +14,7 @@ use yii\web\View;
 
 /**
  * @author Paweł Bizley Brzozowski
- * @version 1.4.0
+ * @version 1.5.0
  * @license Apache 2.0
  * https://github.com/bizley/yii2-content-tools
  *
@@ -181,7 +181,7 @@ class ContentTools extends Widget
      * @since 1.3.0
      */
     public $customJs;
-    
+
     /**
      * {@inheritdoc}
      */
@@ -395,7 +395,11 @@ JS
     public function initImagesEngine()
     {
         if ($this->imagesEngine !== false) {
-            if (empty($this->imagesEngine['upload']) || empty($this->imagesEngine['rotate']) || empty($this->imagesEngine['insert'])) {
+            if (
+                empty($this->imagesEngine['upload'])
+                || empty($this->imagesEngine['rotate'])
+                || empty($this->imagesEngine['insert'])
+            ) {
                 throw new InvalidConfigException('Invalid options for the imagesEngine configuration!');
             }
 
@@ -403,7 +407,10 @@ JS
 
             $this->registerCsrfToken();
 
-            $this->getView()->registerJs(";var _CTImagesUrl = ['{$this->imagesEngine['upload']}', '{$this->imagesEngine['rotate']}', '{$this->imagesEngine['insert']}'];", View::POS_BEGIN);
+            $this->getView()->registerJs(
+                ";var _CTImagesUrl = ['{$this->imagesEngine['upload']}', '{$this->imagesEngine['rotate']}', '{$this->imagesEngine['insert']}'];",
+                View::POS_BEGIN
+            );
         } else {
             $this->registerCsrfToken(true);
 
@@ -429,7 +436,7 @@ JS
      */
     public function addStyles()
     {
-        if (!empty($this->styles)) {
+        if (count($this->styles)) {
             $newStyles = [];
 
             foreach ($this->styles as $name => $style) {
@@ -451,10 +458,10 @@ JS
                             $tags = explode(',', $style['tags']);
 
                             foreach ($tags as $tag) {
-                                $possible_tag = str_replace("'", '', trim($tag));
+                                $possibleTag = str_replace("'", '', trim($tag));
 
-                                if (!empty($possible_tag)) {
-                                    $addTags[] = $possible_tag;
+                                if (!empty($possibleTag)) {
+                                    $addTags[] = $possibleTag;
                                 }
                             }
                         } else {
@@ -463,10 +470,10 @@ JS
                                     throw new InvalidConfigException('Invalid options for styles configuration!');
                                 }
 
-                                $possible_tag = str_replace("'", '', trim($tag));
+                                $possibleTag = str_replace("'", '', trim($tag));
 
-                                if (!empty($possible_tag)) {
-                                    $addTags[] = $possible_tag;
+                                if (!empty($possibleTag)) {
+                                    $addTags[] = $possibleTag;
                                 }
                             }
                         }
@@ -487,7 +494,10 @@ JS
             }
 
             if (!empty($newStyles)) {
-                $this->getView()->registerJs('ContentTools.StylePalette.add([' . implode(',', $newStyles) . ']);', View::POS_END);
+                $this->getView()->registerJs(
+                    'ContentTools.StylePalette.add([' . implode(',', $newStyles) . ']);',
+                    View::POS_END
+                );
             }
         }
     }
@@ -520,16 +530,16 @@ JS
     {
         parent::init();
 
-        if (!empty($this->page) && !is_string($this->page)) {
+        if ($this->page !== null && (!is_string($this->page) || $this->page === '')) {
             throw new InvalidConfigException('Invalid page configuration!');
         }
-        if (!is_string($this->tag)) {
+        if (!is_string($this->tag) || $this->tag === '') {
             throw new InvalidConfigException('Invalid tag configuration!');
         }
-        if (!is_string($this->dataInit)) {
+        if (!is_string($this->dataInit) || $this->dataInit === '') {
             throw new InvalidConfigException('Invalid dataInit configuration!');
         }
-        if (!is_string($this->dataName)) {
+        if (!is_string($this->dataName) || $this->dataName === '') {
             throw new InvalidConfigException('Invalid dataName configuration!');
         }
         if (!is_array($this->options)) {
@@ -544,10 +554,10 @@ JS
         if (!is_array($this->styles)) {
             throw new InvalidConfigException('Invalid styles configuration!');
         }
-        if (!is_string($this->language) && $this->language !== false && $this->language !== true) {
+        if ($this->language === '' || (!is_string($this->language) && !is_bool($this->language))) {
             throw new InvalidConfigException('Invalid language configuration!');
         }
-        if ($this->globalConfig !== false && $this->globalConfig !== true) {
+        if (!is_bool($this->globalConfig)) {
             throw new InvalidConfigException('Invalid globalConfig configuration!');
         }
 
@@ -558,12 +568,13 @@ JS
     
     /**
      * Returns data-* attribute with the given name.
+     * Since 1.5.0 attribute value is HTML-encoded.
      * @param string $attribute Attribute name,
      * @return string
      */
     public static function dataAttribute($attribute)
     {
-        return 'data-' . $attribute;
+        return 'data-' . Html::encode($attribute);
     }
     
     /**
