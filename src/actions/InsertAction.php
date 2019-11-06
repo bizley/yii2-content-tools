@@ -6,6 +6,7 @@ use Exception;
 use Yii;
 use yii\base\Action;
 use yii\base\InvalidParamException;
+use yii\helpers\FileHelper;
 use yii\helpers\Json;
 use yii\imagine\Image;
 
@@ -25,6 +26,13 @@ use yii\imagine\Image;
  * - `0,0,1,1` means full image with no cropping and
  * - `0.25,0.25,0.75,0.75` means that box half the size of the full image in the center needs to be cropped from it.
  *
+ *   0        1
+ * 0 +--------+
+ *   |        |
+ *   |        |
+ *   |        |
+ * 1 +--------+
+ *
  * Cropping is handled by the Imagine library through yii2-imagine extension.
  * JS engine can add `?_ignore=...` part to the url so it should be removed.
  * If `crop` parameter is not set image should be inserted in the content as-is.
@@ -32,6 +40,22 @@ use yii\imagine\Image;
  */
 class InsertAction extends Action
 {
+    /**
+     * @var string Image upload folder. This can be Yii alias.
+     * Example: /var/www/site/web/images
+     * This value should be the same for all actions $uploadDir.
+     * @since 1.5.0
+     */
+    public $uploadDir = '@webroot/content-tools-uploads';
+
+    /**
+     * @var string Web accesible path to upload folder. This can be Yii alias.
+     * Example: /images
+     * This value should be the same for all actions $viewPath.
+     * @since 1.5.0
+     */
+    public $viewPath = '@web/content-tools-uploads';
+
     /**
      * {@inheritdoc}
      */
@@ -49,16 +73,17 @@ class InsertAction extends Action
             }
 
             $url = trim($data['url']);
-
-            if (strpos($url, '/') === 0) {
-                $url = substr($url, 1);
+            $imageName = substr($url, strrpos($url, '/') + 1);
+            if (strpos($imageName, '?_ignore=') !== false) {
+                $imageName = substr($imageName, 0, strpos($imageName, '?_ignore='));
             }
+            $imagePath = FileHelper::normalizePath(
+                Yii::getAlias(FileHelper::normalizePath($this->uploadDir, '/'))
+                . DIRECTORY_SEPARATOR
+                . $imageName
+            );
 
-            if (strpos($url, '?_ignore=') !== false) {
-                $url = substr($url, 0, strpos($url, '?_ignore='));
-            }
-
-            $imageSizeInfo = @getimagesize($url);
+            $imageSizeInfo = @getimagesize($imagePath);
 
             if ($imageSizeInfo === false) {
                 throw new InvalidParamException('Parameter "url" seems to be invalid!');
@@ -86,20 +111,20 @@ class InsertAction extends Action
                 list($width, $height) = $imageSizeInfo;
 
                 Image::crop(
-                    $url,
+                    $imagePath,
                     floor($width * $positions[3] - $width * $positions[1]),
                     floor($height * $positions[2] - $height * $positions[0]),
                     [
                         floor($width * $positions[1]),
                         floor($height * $positions[0])
                     ]
-                )->save($url);
+                )->save($imagePath);
             }
 
             return Json::encode([
-                'size' => @getimagesize($url),
-                'url' => '/' . $url,
-                'alt' => basename($url)
+                'size' => @getimagesize($imagePath), // not using $imageSizeInfo because it's new size
+                'url' => Yii::getAlias(FileHelper::normalizePath($this->viewPath, '/') . '/' . $imageName),
+                'alt' => $imageName
             ]);
 
         } catch (Exception $e) {
