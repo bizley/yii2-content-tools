@@ -22,6 +22,11 @@ Add the package to your composer.json:
 
 and run `composer update` or alternatively run `composer require bizley/contenttools`
 
+## Bower Asset
+
+This package depends on Bower package fetched through https://asset-packagist.org/  
+Make sure you can fetch it by configuring your composer.json properly (see instructions at the link above).
+
 ## Usage
 
 ### 1. The widget.
